@@ -1,0 +1,19 @@
+{
+  "patient": "patient1",
+  "time": 1578446507,
+  "device": {
+    "makerCode": "Maker-A",
+    "productCode": "Thermometer",
+    "version": "1.0.0",
+    "serialId": "serialId",
+    "name": "Maker-A Thermometer"
+  },
+  "vitals": {
+    "BT": {
+      "type": "BT",
+      "unit": "℃",
+      "time": 1578446507,
+      "value": 37.6
+    }
+  }
+}

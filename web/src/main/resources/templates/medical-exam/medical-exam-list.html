@@ -1,0 +1,97 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHR | 健康診断情報一覧</title>
+</head>
+<body>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" layout:fragment="content">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            健康診断
+            <!--            <small></small>-->
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content container-fluid">
+        <div class="box">
+            <div class="box-header">
+                <h3 class="box-title">medical exam result</h3>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body no-padding">
+                <table class="table table-striped">
+                    <tr>
+                        <th>受診日</th>
+                        <th>受診会場</th>
+                        <th>身長</th>
+                        <th>体重</th>
+                        <th></th>
+                    </tr>
+                    <tr th:each="userRecord : ${userRecords}">
+                        <td>
+                            <a th:href="@{'/medical-exam/'+ *{userRecord.id}+ '/edit'}">
+                                <span th:text="${#temporals.format(userRecord.event.time, 'yyyy/MM/dd')}"></span>
+                            </a>
+                        </td>
+                        <td><span th:text="*{userRecord.event.location}"></span></td>
+                        <td><span th:text="*{userRecord.height}"></span>㎝</td>
+                        <td><span th:text="*{userRecord.weight}"></span>㎏</td>
+                        <td>
+                            <a href="#" data-toggle="modal" data-target="#delete-confirm" th:attr="data-record-id=*{userRecord.id}">
+                                <i class="fa fa-trash-o"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!-- /.box-body -->
+        </div>
+        <!-- /.box -->
+    </section>
+    <!-- /.content -->
+
+    <div class="modal modal-danger fade" id="delete-confirm">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">削除してよろしいですか？</h4>
+                </div>
+                <div class="modal-body">
+                    <p>一度削除したデータは復活できません。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline pull-left" data-dismiss="modal">Close</button>
+                    <form id="deleteForm" role="form" action="daily/" th:action="@{'/medical-exam/'+ dummy + '/delete'}" method="post">
+                        <button type="submit" class="btn btn-danger">削除</button>
+                    </form>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- /.modal -->
+</div>
+<!-- /.content-wrapper -->
+
+<div layout:fragment="footer-js">
+    <script th:inline="javascript">
+        $('#delete-confirm').on('show.bs.modal', function(e) {
+            var recordId = $(e.relatedTarget).data('record-id')
+            console.log(recordId)
+            $(this).find("#deleteForm").attr("action", "/medical-exam/" + recordId + "/delete")
+        })
+    </script>
+</div>
+
+</body>
+</html>

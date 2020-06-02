@@ -1,0 +1,336 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHR | 健康診断情報</title>
+</head>
+<body>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" layout:fragment="content">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            健康診断
+            <small>結果を入力してください。</small>
+        </h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <form class="form-horizontal" role="form" action="medical-exam/" th:action="@{/medical-exam/_/create}"
+              th:object="${medicalExamForm}" method="post">
+            <div class="box-body">
+                <!--        <div class="row">-->
+                <!--            <div class="col-md-6">-->
+                <!-- Horizontal Form -->
+                <div class="box box-info">
+                    <div class="box-header with-border">
+                        <h3 class="box-title">基本情報</h3>
+                    </div>
+                    <div class="box-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group" th:classappend="${#fields.hasErrors('eventTime')}? 'has-error'">
+                                    <label for="eventTime" class="col-sm-2 control-label">受診日</label>
+
+                                    <div class="col-sm-10">
+                                        <input type="date" class="form-control" id="eventTime" name="ftext"
+                                               th:field="*{eventTime}"/>
+                                        <span th:if="${#fields.hasErrors('eventTime')}" th:errors="*{eventTime}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group" th:classappend="${#fields.hasErrors('eventLocation')}? 'has-error'">
+                                    <label for="eventLocation" class="col-sm-2 control-label">受診会場</label>
+
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="eventLocation" name="ftext"
+                                               th:field="*{eventLocation}"/>
+                                        <span th:if="${#fields.hasErrors('eventLocation')}" th:errors="*{eventLocation}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="box box-info">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">健診結果①</h3>
+                            </div>
+                            <div class="box-body">
+                                <div class="form-group" th:classappend="${#fields.hasErrors('height')}? 'has-error'">
+                                    <label for="height" class="col-sm-4 control-label text-left">身長</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="height" name="ftext"
+                                                   th:field="*{height}"/>
+                                            <span class="input-group-addon">㎝</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('height')}" th:errors="*{height}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" th:classappend="${#fields.hasErrors('weight')}? 'has-error'">
+                                    <label for="weight" class="col-sm-4 control-label">体重</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="weight" name="ftext"
+                                                   th:field="*{weight}"/>
+                                            <span class="input-group-addon">㎏</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('weight')}" th:errors="*{weight}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('systolicBloodPressure')}? 'has-error'">
+                                    <label for="systolicBloodPressure" class="col-sm-4 control-label">収縮期血圧</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="systolicBloodPressure"
+                                                   name="ftext"
+                                                   th:field="*{systolicBloodPressure}"/>
+                                            <span class="input-group-addon">mmHg</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('systolicBloodPressure')}"
+                                              th:errors="*{systolicBloodPressure}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('diastolicBloodPressure')}? 'has-error'">
+                                    <label for="diastolicBloodPressure" class="col-sm-4 control-label">拡張期血圧</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="diastolicBloodPressure"
+                                                   name="ftext"
+                                                   th:field="*{diastolicBloodPressure}"/>
+                                            <span class="input-group-addon">mmHg</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('diastolicBloodPressure')}"
+                                              th:errors="*{diastolicBloodPressure}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('ldlCholesterol')}? 'has-error'">
+                                    <label for="ldlCholesterol" class="col-sm-4 control-label">LDLコレステロール</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="ldlCholesterol"
+                                                   name="ftext"
+                                                   th:field="*{ldlCholesterol}"/>
+                                            <span class="input-group-addon">mg/dL</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('ldlCholesterol')}"
+                                              th:errors="*{ldlCholesterol}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('hdlCholesterol')}? 'has-error'">
+                                    <label for="hdlCholesterol" class="col-sm-4 control-label">HDLコレステロール</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="hdlCholesterol"
+                                                   name="ftext"
+                                                   th:field="*{hdlCholesterol}"/>
+                                            <span class="input-group-addon">mg/dL</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('hdlCholesterol')}"
+                                              th:errors="*{hdlCholesterol}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('tobaccoHistory')}? 'has-error'">
+                                    <label for="tobaccoHistory" class="col-sm-4 control-label">喫煙</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <select class="form-control" id="tobaccoHistory" name="tobaccoHistory">
+                                                <option value=""></option>
+                                                <option th:each="item : ${TOBACCO_HISTORY}" th:value="${item.value}"
+                                                        th:text="${item.key}" th:field="*{tobaccoHistory}">pulldown
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('tobaccoHistory')}"
+                                              th:errors="*{tobaccoHistory}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('urineProtein')}? 'has-error'">
+                                    <label for="urineProtein" class="col-sm-4 control-label">尿蛋白</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <select class="form-control" id="urineProtein" name="urineProtein">
+                                                <option value=""></option>
+                                                <option th:each="item : ${URINE_PROTEIN}" th:value="${item.value}"
+                                                        th:text="${item.key}" th:field="*{urineProtein}">pulldown
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('urineProtein')}"
+                                              th:errors="*{urineProtein}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="box box-info">
+                            <div class="box-header with-border">
+                                <h3 class="box-title">健診結果②</h3>
+                            </div>
+                            <div class="box-body">
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('fastingPlasmaGlucose')}? 'has-error'">
+                                    <label for="fastingPlasmaGlucose" class="col-sm-4 control-label">血糖</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="fastingPlasmaGlucose"
+                                                   name="ftext"
+                                                   th:field="*{fastingPlasmaGlucose}"/>
+                                            <span class="input-group-addon">mg/dL</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('fastingPlasmaGlucose')}"
+                                              th:errors="*{fastingPlasmaGlucose}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" th:classappend="${#fields.hasErrors('hbA1c')}? 'has-error'">
+                                    <label for="hbA1c" class="col-sm-4 control-label">HbA1c</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="hbA1c" name="ftext"
+                                                   th:field="*{hbA1c}"/>
+                                            <span class="input-group-addon">％</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('hbA1c')}" th:errors="*{hbA1c}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" th:classappend="${#fields.hasErrors('alt')}? 'has-error'">
+                                    <label for="alt" class="col-sm-4 control-label">ALT</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="alt" name="ftext"
+                                                   th:field="*{alt}"/>
+                                            <span class="input-group-addon">IU/L</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('alt')}" th:errors="*{alt}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('neutralFat')}? 'has-error'">
+                                    <label for="neutralFat" class="col-sm-4 control-label">中性脂肪</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="neutralFat" name="ftext"
+                                                   th:field="*{neutralFat}"/>
+                                            <span class="input-group-addon">mg/dL</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('neutralFat')}" th:errors="*{neutralFat}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" th:classappend="${#fields.hasErrors('ast')}? 'has-error'">
+                                    <label for="alt" class="col-sm-4 control-label">AST</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="ast" name="ftext"
+                                                   th:field="*{ast}"/>
+                                            <span class="input-group-addon">IU/L</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('ast')}" th:errors="*{ast}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('waistCircumference')}? 'has-error'">
+                                    <label for="waistCircumference" class="col-sm-4 control-label">腹囲</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="waistCircumference" name="ftext"
+                                                   th:field="*{waistCircumference}"/>
+                                            <span class="input-group-addon">㎝</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('waistCircumference')}"
+                                              th:errors="*{waistCircumference}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group"
+                                     th:classappend="${#fields.hasErrors('urinaryGlucose')}? 'has-error'">
+                                    <label for="urinaryGlucose" class="col-sm-4 control-label">尿糖</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <select class="form-control" id="urinaryGlucose" name="urinaryGlucose">
+                                                <option value=""></option>
+                                                <option th:each="item : ${URINARY_GLUCOSE}" th:value="${item.value}"
+                                                        th:text="${item.key}" th:field="*{urinaryGlucose}">pulldown
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('urinaryGlucose')}"
+                                              th:errors="*{urinaryGlucose}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" th:classappend="${#fields.hasErrors('gammaGtp')}? 'has-error'">
+                                    <label for="gammaGtp" class="col-sm-4 control-label">γGTP</label>
+
+                                    <div class="col-sm-8">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="gammaGtp" name="ftext"
+                                                   th:field="*{gammaGtp}"/>
+                                            <span class="input-group-addon">IU/L</span>
+                                        </div>
+                                        <span th:if="${#fields.hasErrors('gammaGtp')}" th:errors="*{gammaGtp}"
+                                              class="help-block">error!</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer">
+                    <!--                                                <button type="submit" class="btn btn-default">Cancel</button>-->
+                    <button type="submit" class="btn btn-info pull-right">送信</button>
+                </div>
+                <!-- /.box-footer -->
+            </div>
+        </form>
+    </section>
+</div>
+
+
+</body>
+</html>

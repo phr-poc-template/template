@@ -1,0 +1,27 @@
+{
+  "bindings": [
+    {
+      "name": "mySbMsg",
+      "type": "serviceBusTrigger",
+      "direction": "in",
+      "queueName": "sbq-dataexchange",
+      "connection": "ServiceBusConnection"
+    },
+    {
+      "name": "productsRecord",
+      "type": "blob",
+      "path": "data/products.json",
+      "connection": "STORAGE_CONNECTION_STRING",
+      "direction": "in"
+    },
+    {
+      "name": "userRecord",
+      "type": "cosmosDB",
+      "direction": "out",
+      "databaseName": "phrdb",
+      "collectionName": "user_record",
+      "createIfNotExists": true,
+      "connectionStringSetting": "COSMOSDB_CONNECTION_STRING"
+    }
+  ]
+}

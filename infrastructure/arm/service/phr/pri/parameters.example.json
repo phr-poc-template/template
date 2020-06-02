@@ -1,0 +1,84 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "tisiac"
+    },
+    "location": {
+      "value": "japaneast"
+    },
+    "streamJobNameForPrimaryFromEventHubs": {
+      "value": "asa-phrpri-evh"
+    },
+    "streamJobNameForPrimaryFromIothub": {
+      "value": "asa-phrpri-aih"
+    },
+    "blobStorageAccountNameForData": {
+      "value": "stphrpriasarefdata"
+    },
+    "blobStorageContainerNameForData": {
+      "value": "data"
+    },
+    "blobStorageAccountNameForRaw": {
+      "value": "stphrpriraw"
+    },
+    "blobStorageContainerNameForRaw": {
+      "value": "raw"
+    },
+    "eventhubServicebusNamespace": {
+      "value": "evh-phrpri"
+    },
+    "eventhubSharedAccessPolicyName": {
+      "value": "RootManageSharedAccessKey"
+    },
+    "iothubSharedAccessPolicyName":{
+      "value": "iothubowner"
+    },
+    "eventhubConsumerGroupName": {
+      "value": ""
+    },
+    "iothubConsumerGroupName": {
+      "value": ""
+    },
+    "iothubServicebusName": {
+      "value": "aih-phrpri"
+    },
+    "cosmosdbAccountId": {
+      "value": "cosdb-phrpri"
+    },
+    "cosmosdbContainerNameForUserrecord": {
+      "value": "user_record"
+    },
+    "cosmosdbContainerNameForUser": {
+      "value": "user"
+    },
+    "cosmosdbPartitionKey": {
+      "value": "/id"
+    },
+    "cosmosdbDocumentId": {
+      "value": "id"
+    },
+    "containerRegistryName": {
+      "value": "acrphrpri"
+    },
+    "logAnalyticsWorkspaceName": {
+      "value": "log-phrpri"
+    },
+    "keyvaultName": {
+      "value": "kv-phrpri"
+    },
+    "functionsStorageAccountName": {
+      "value": "stphrpriazfun"
+    },
+    "functionNameForCosmos2Blob": {
+      "value": "azfun-phrpri-cosdb-trigger"
+    },
+    "functionNameForDataExchange": {
+      "value": "azfun-phrpri-dataexchange"
+    },
+    "apiManagementNameForDataExchange": {
+      "value": "api-phrpri-dataexchange"
+    }
+  }
+}

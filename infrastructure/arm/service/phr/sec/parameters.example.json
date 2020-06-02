@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environment": {
+      "value": "tisiac"
+    },
+    "location": {
+      "value": "japaneast"
+    },
+    "blobStorageAccountNameForData": {
+      "value": "stphrsecasarefdata"
+    },
+    "blobStorageContainerNameForData": {
+      "value": "data"
+    },
+    "blobStorageAccountNameForRaw": {
+      "value": "stphrsecraw"
+    },
+    "blobStorageContainerNameForRaw": {
+      "value": "raw"
+    },
+    "servicebusNamespace": {
+      "value": "sb-phrsec"
+    },
+    "cosmosdbAccountId": {
+      "value": "cosdb-phrsec"
+    },
+    "cosmosdbContainerNameForUserrecord": {
+      "value": "user_record"
+    },
+    "cosmosdbContainerNameForUser": {
+      "value": "user"
+    },
+    "cosmosdbPartitionKey": {
+      "value": "/id"
+    },
+    "logAnalyticsWorkspaceName": {
+      "value": "log-phrsec" 
+    },
+    "keyvaultName": {
+      "value": "kv-phrsec"
+    },
+    "functionsStorageAccountName": {
+      "value": "stphrsecazfun"
+    },
+    "functionNameForDataexchange": {
+      "value": "azfun-phrsec-dataexchange"
+    },
+    "apiManagementName": {
+      "value": "api-phrpri-dataexchange"
+    },
+    "endpointFunctionName": {
+      "value": "azfun-phrpri-dataexchange"
+    },
+    "restResourcePath": {
+      "value": "/users/demo01/records"
+    },
+    "functionNameForSbqTrigger": {
+      "value": "azfun-phrsec-sbq-trigger"
+    },
+    "functionNameForCosmos2Blob": {
+      "value": "azfun-phrsec-cosdb-trigger"
+    }
+  }
+}

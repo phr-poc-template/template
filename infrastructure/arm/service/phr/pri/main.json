@@ -1,0 +1,635 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "templateUri": {
+      "type": "string"
+    },
+    "containerSasToken": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "streamJobNameForPrimaryFromEventHubs": {
+      "type": "string"
+    },
+    "streamJobNameForPrimaryFromIothub": {
+      "type": "string"
+    },
+    "blobStorageAccountNameForData": {
+      "type": "string"
+    },
+    "blobStorageContainerNameForData": {
+      "type": "string"
+    },
+    "blobStorageAccountNameForRaw": {
+      "type": "string"
+    },
+    "blobStorageContainerNameForRaw": {
+      "type": "string"
+    },
+    "eventhubServicebusNamespace": {
+      "type": "string"
+    },
+    "iothubServicebusName": {
+      "type": "string"
+    },
+    "eventhubSharedAccessPolicyName": {
+      "type": "string"
+    },
+    "iothubSharedAccessPolicyName":{
+      "type":"string"
+    },
+    "eventhubConsumerGroupName": {
+      "type": "string"
+    },
+    "iothubConsumerGroupName": {
+      "type": "string"
+    },
+    "cosmosdbAccountId": {
+      "type": "string"
+    },
+    "cosmosdbContainerNameForUserrecord": {
+      "type": "string"
+    },
+    "cosmosdbContainerNameForUser": {
+      "type": "string"
+    },
+    "cosmosdbPartitionKey": {
+      "type": "string"
+    },
+    "cosmosdbDocumentId": {
+      "type": "string"
+    },
+    "containerRegistryName": {
+      "type": "string"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string"
+    },
+    "keyvaultName": {
+      "type": "string"
+    },
+    "userObjectIdForKeyvault": {
+      "type": "string"
+    },
+    "functionsStorageAccountName": {
+      "type": "string"
+    },
+    "functionNameForCosmos2Blob": {
+      "type": "string"
+    },
+    "functionNameForDataExchange": {
+      "type": "string"
+    },
+    "apiManagementNameForDataExchange": {
+      "type": "string"
+    },
+    "clientIdForRegisteredAppInAd": {
+      "type": "string"
+    },
+    "clientSecretForRegisteredAppInAd": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "streamAnalyticsEvhTemplateUrl": "[concat(parameters('templateUri'),'stream_analytics/stream_analytics_evh.json', parameters('containerSasToken'))]",
+    "streamAnalyticsIothubTemplateUrl":"[concat(parameters('templateUri'),'stream_analytics/stream_analytics_aih.json', parameters('containerSasToken'))]",
+    "cosmosDbTemplateUrl": "[concat(parameters('templateUri'),'cosmosdb/cosmosdb_phrdb.json', parameters('containerSasToken'))]",
+    "eventhubTemplateUrl": "[concat(parameters('templateUri'),'eventhub/eventhub_phr.json', parameters('containerSasToken'))]",
+    "blobStorageTemplateUrl": "[concat(parameters('templateUri'),'storageaccount/storageaccount_blob.json', parameters('containerSasToken'))]",
+    "containerRegistryTemplateUrl": "[concat(parameters('templateUri'),'container_registry/container_registry_phr.json', parameters('containerSasToken'))]",
+    "logAnalyticsWorkspaceTemplateUrl": "[concat(parameters('templateUri'),'log_analytics_workspace/log_analytics_workspace_phr_logs.json', parameters('containerSasToken'))]",
+    "functionsStorageTemplateUrl": "[concat(parameters('templateUri'),'storageaccount/storageaccount_functions_store.json', parameters('containerSasToken'))]",
+    "keyvaultTemplateUrl": "[concat(parameters('templateUri'),'keyvault/keyvault_phrkeyvault.json', parameters('containerSasToken'))]",
+    "functionsCosmos2BlobTemplateUrl": "[concat(parameters('templateUri'),'functions/functions_cosmos2blob.json', parameters('containerSasToken'))]",
+    "functionsDataExchangeTemplateUrl": "[concat(parameters('templateUri'),'functions/functions_data_exchange.json', parameters('containerSasToken'))]",
+    "iothubTemplateUrl":"[concat(parameters('templateUri'),'iot_hub/iot_hub_phr.json', parameters('containerSasToken'))]",
+    "apiManagementForDataExchangeTemplateUrl": "[concat(parameters('templateUri'),'api_management/api_management_phr.json', parameters('containerSasToken'))]",
+    "cosmosDbAccountName": "[concat(parameters('cosmosdbAccountId'), '-' ,parameters('environment'))]",
+    "eventhubNameSpace": "[concat(parameters('eventhubServicebusNamespace'), '-', parameters('environment'))]",
+    "iothubName":"[concat(parameters('iothubServicebusName'), '-', parameters('environment'))]",
+    "blobStorageAccountNameForData": "[concat(parameters('blobStorageAccountNameForData'), parameters('environment'))]",
+    "blobStorageAccountNameForRaw": "[concat(parameters('blobStorageAccountNameForRaw'), parameters('environment'))]",
+    "streamJobNameForPrimaryFromEventHubs": "[concat(parameters('streamJobNameForPrimaryFromEventHubs'),'-',parameters('environment'))]",
+    "streamJobNameForPrimaryFromIothub": "[concat(parameters('streamJobNameForPrimaryFromIothub'),'-',parameters('environment'))]",
+    "containerRegistryName": "[concat(parameters('containerRegistryName'), parameters('environment'))]",
+    "logAnalyticsWorkspaceName": "[concat(parameters('logAnalyticsWorkspaceName'), '-', parameters('environment'))]",
+    "keyvaultName": "[concat(parameters('keyvaultName'), '-', parameters('environment'))]",
+    "functionsStorageAccountName": "[concat(parameters('functionsStorageAccountName'), parameters('environment'))]",
+    "functionNameForCosmos2Blob": "[concat(parameters('functionNameForCosmos2Blob'), '-', parameters('environment'))]",
+    "functionNameForDataExchange": "[concat(parameters('functionNameForDataExchange'), '-', parameters('environment'))]",
+    "apiManagementNameForDataExchange": "[concat(parameters('apiManagementNameForDataExchange'), '-', parameters('environment'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "eventhubTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('eventhubTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "eventHubNameSpace": {
+            "value": "[variables('eventhubNameSpace')]"
+          },
+          "eventhubSharedAccessPolicyName": {
+            "value": "[parameters('eventhubSharedAccessPolicyName')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "blobStorageTemplateForData",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('blobStorageTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('blobStorageAccountNameForData')]"
+          },
+          "containerName": {
+            "value": "[parameters('blobStorageContainerNameForData')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "blobStorageTemplateForRaw",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('blobStorageTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('blobStorageAccountNameForRaw')]"
+          },
+          "containerName": {
+            "value": "[parameters('blobStorageContainerNameForRaw')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "cosmosDbTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('cosmosDbTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "cosmosdbAccountId": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosdbContainerNameForUser": {
+            "value": "[parameters('cosmosdbContainerNameForUser')]"
+          },
+          "cosmosdbContainerNameForUserrecord": {
+            "value": "[parameters('cosmosdbContainerNameForUserrecord')]"
+          },
+          "cosmosdbPartitionKey": {
+            "value": "[parameters('cosmosdbPartitionKey')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "streamAnalyticsEvh2UserrecordTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'eventhubTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'blobStorageTemplateForData')]",
+        "[resourceId('Microsoft.Resources/deployments', 'blobStorageTemplateForRaw')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('streamAnalyticsEvhTemplateUrl')]"
+        },
+        "parameters": {
+          "streamJobName": {
+            "value": "[variables('streamJobNameForPrimaryFromEventHubs')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "inputBlobStorageName": {
+            "value": "[variables('blobStorageAccountNameForData')]"
+          },
+          "inputBlobStorageKey": {
+            "value": "[reference('blobStorageTemplateForData').outputs.blobAccessKey.value]"
+          },
+          "inputBlobStorageContainerName": {
+            "value": "[parameters('blobStorageContainerNameForData')]"
+          },
+          "outputBlobStorageName": {
+            "value": "[variables('blobStorageAccountNameForRaw')]"
+          },
+          "outputBlobStorageKey": {
+            "value": "[reference('blobStorageTemplateForRaw').outputs.blobAccessKey.value]"
+          },
+          "outputBlobStorageContainerName": {
+            "value": "[parameters('blobStorageContainerNameForRaw')]"
+          },
+          "eventhubServicebusNamespace": {
+            "value": "[variables('eventhubNameSpace')]"
+          },
+          "eventhubSharedAccessPolicyName": {
+            "value": "[parameters('eventhubSharedAccessPolicyName')]"
+          },
+          "eventhubSharedAccessPolicyKey": {
+            "value": "[reference('eventhubTemplate').outputs.eventHubSharedAccessKey.value]"
+          },
+          "eventhubConsumerGroupName": {
+            "value": "[parameters('eventhubConsumerGroupName')]"
+          },
+          "cosmosdbAccountId": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosdbAccountKey": {
+           "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          },
+          "cosmosdbCollectionNamePattern": {
+            "value": "[parameters('cosmosdbContainerNameForUserrecord')]"
+          },
+          "cosmosdbPartitionKey": {
+            "value": "[parameters('cosmosdbPartitionKey')]"
+          },
+          "cosmosdbDocumentId": {
+            "value": "[parameters('cosmosdbDocumentId')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "containerRegistryTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('containerRegistryTemplateUrl')]"
+        },
+        "parameters": {
+          "containerRegistryName": {
+            "value": "[variables('containerRegistryName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "logAnalyticsWorkspaceTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('logAnalyticsWorkspaceTemplateUrl')]"
+        },
+        "parameters": {
+          "logAnalyticsWorkspaceName": {
+            "value": "[variables('logAnalyticsWorkspaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "keyvalutTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsWorkspaceTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'containerRegistryTemplate')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('keyvaultTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "keyvaultName": {
+            "value": "[variables('keyvaultName')]"
+          },
+          "userObjectIdForOwner": {
+            "value": "[parameters('userObjectIdForKeyvault')]"
+          },
+          "cosmosdbAccountKey": {
+            "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference('logAnalyticsWorkspaceTemplate').outputs.logAnalyticsWorkspaceId.value]"
+          },
+          "logAnalyticsWorkspacePrimarySharedKey": {
+            "value": "[reference('logAnalyticsWorkspaceTemplate').outputs.logAnalyticsWorkspacePrimarySharedKey.value]"
+          },
+          "containerRegistryUsername": {
+            "value": "[reference('containerRegistryTemplate').outputs.containerRegistryUsername.value]"
+          },
+          "containerRegistryPassword": {
+            "value": "[reference('containerRegistryTemplate').outputs.containerRegistryPassword.value]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsStorageTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsStorageTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('functionsStorageAccountName')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsCosmos2BlobTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'functionsStorageTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'blobStorageTemplateForData')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsCosmos2BlobTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "triggerName": {
+            "value": "[variables('functionNameForCosmos2Blob')]"
+          },
+          "storageAccountNameForPackage": {
+            "value": "[variables('functionsStorageAccountName')]"
+          },
+          "blobContainerName": {
+            "value": "[parameters('blobStorageContainerNameForRaw')]"
+          },
+          "cosmosDbAccountName": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosDbAccessKey": {
+            "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          },
+          "storageAccountNameForTrigger": {
+            "value": "[variables('blobStorageAccountNameForRaw')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsDataExchangeTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'functionsStorageTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsDataExchangeTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "triggerName": {
+            "value": "[variables('functionNameForDataExchange')]"
+          },
+          "storageAccountNameForPackage": {
+            "value": "[variables('functionsStorageAccountName')]"
+          },
+          "cosmosDbAccountName": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosDbAccessKey": {
+            "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "streamAnalyticsIotHub2CosmosdbTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'iothubTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'blobStorageTemplateForRaw')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('streamAnalyticsIothubTemplateUrl')]"
+        },
+        "parameters": {
+          "streamJobName": {
+            "value": "[variables('streamJobNameForPrimaryFromIothub')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "inputBlobStorageName": {
+            "value": "[variables('blobStorageAccountNameForData')]"
+          },
+          "inputBlobStorageKey": {
+            "value": "[reference('blobStorageTemplateForData').outputs.blobAccessKey.value]"
+          },
+          "inputBlobStorageContainerName": {
+            "value": "[parameters('blobStorageContainerNameForData')]"
+          },
+          "outputBlobStorageName": {
+            "value": "[variables('blobStorageAccountNameForRaw')]"
+          },
+          "outputBlobStorageKey": {
+            "value": "[reference('blobStorageTemplateForRaw').outputs.blobAccessKey.value]"
+          },
+          "outputBlobStorageContainerName": {
+            "value": "[parameters('blobStorageContainerNameForRaw')]"
+          },
+          "iotHubNamespace": {
+            "value": "[variables('iothubName')]"
+          },
+          "iothubSharedAccessPolicyName": {
+            "value": "[parameters('iothubSharedAccessPolicyName')]"
+          },
+          "iothubSharedAccessPolicyKey": {
+            "value": "[reference('iothubTemplate').outputs.iotHubSharedAccessKey.value]"
+          },
+          "iothubConsumerGroupName": {
+            "value": "[parameters('iothubConsumerGroupName')]"
+          },
+          "cosmosdbAccountId": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosdbAccountKey": {
+           "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          },
+          "cosmosdbCollectionNamePattern": {
+            "value": "[parameters('cosmosdbContainerNameForUserrecord')]"
+          },
+          "cosmosdbPartitionKey": {
+            "value": "[parameters('cosmosdbPartitionKey')]"
+          },
+          "cosmosdbDocumentId": {
+            "value": "[parameters('cosmosdbDocumentId')]"
+          }
+        }
+      }
+    },
+
+
+
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "iothubTemplate",
+      "apiVersion": "2016-09-01",
+      "properties":{
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('iothubTemplateUrl')]"
+        },
+        "parameters":{
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "iothubName":{
+            "value":"[variables('iothubName')]"
+          }
+        }
+
+      }
+
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "apiManagementForDataExchangeTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'functionsStorageTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'functionsDataExchangeTemplate')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('apiManagementForDataExchangeTemplateUrl')]"
+        },
+        "parameters": {
+          "name": {
+            "value": "[variables('apiManagementNameForDataExchange')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "funcDataExchangeName": {
+            "value": "[variables('functionNameForDataExchange')]"
+          },
+          "clientId": {
+            "value": "[parameters('clientIdForRegisteredAppInAd')]"
+          },
+          "clientSecret": {
+            "value": "[parameters('clientSecretForRegisteredAppInAd')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "removestreamJobNameForPrimaryFromEventHubs": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('streamJobNameForPrimaryFromEventHubs'),' --resource-type \"Microsoft.StreamAnalytics/streamingjobs\"' )]"
+    },
+    "removestreamJobNameForPrimaryFromIothub": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('streamJobNameForPrimaryFromIothub'),' --resource-type \"Microsoft.StreamAnalytics/streamingjobs\"' )]"
+    },
+    "removeCosmosDbAccount": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('cosmosDbAccountName'),' --resource-type \"Microsoft.DocumentDB/databaseAccounts\"' )]"
+    },
+    "removeBlobStorage": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('blobStorageAccountNameForData'),' --resource-type \"Microsoft.Storage/storageAccounts\"' )]"
+    },
+    "removeEventhub": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('eventhubNameSpace'),' --resource-type \"Microsoft.EventHub/namespaces\"' )]"
+    },
+    "removeContainerRegistry": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('containerRegistryName'),' --resource-type \"Microsoft.ContainerRegistry/registries\"' )]"
+    },
+    "removeLogAnalyticsWorkspace": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('logAnalyticsWorkspaceName'),' --resource-type \"microsoft.operationalinsights/workspaces\"' )]"
+    },
+    "removeKeyvault": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('keyvaultName'),' --resource-type \"Microsoft.KeyVault/vaults\"' )]"
+    },
+    "removeFunctionsStorage": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('functionsStorageAccountName'),' --resource-type \"Microsoft.Storage/storageAccounts\"' )]"
+    },
+    "removeFunctionsCosmos2Blob": {
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('functionNameForCosmos2Blob'),' --resource-type \"Microsoft.Web/sites\"' )]"
+    },
+    "removeFunctionsIothub":{
+      "type": "string",
+      "value": "[concat('az resource delete --resource-group ', resourceGroup().name, ' --name ', variables('iothubName'),' --resource-type \"Microsoft.Devices/IotHubs\"' )]"
+    }
+  }
+}

@@ -1,0 +1,58 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.1.6.RELEASE'
+    id 'com.google.cloud.tools.jib' version '1.4.0'
+    id 'maven'
+    id 'com.github.johnrengelman.shadow' version '5.1.0'
+}
+
+group = 'jp.co.tis.phr'
+version = '0.0.1-SNAPSHOT'
+
+// Version Control For Dependency Libraries
+ext.thymeleaf = '2.4.1'
+ext.jackson = '2.9.9'
+ext.jacksonDatabind = '2.9.9.3'
+ext.lombok = '1.18.8'
+ext.slf4j = '1.7.26'
+ext.azure = '1.26.0'
+ext.azureDocumentdb = '2.4.1'
+ext.azureBatch = '7.0.0'
+ext.azureBlob = '11.0.1'
+ext.azureIot = '1.16.0'
+ext.azureEventhubs = '3.0.1'
+ext.msRestClientRuntime = '2.1.1'
+ext.junit = '4.12'
+ext.springContext = '5.1.8.RELEASE'
+ext.quartz = '2.3.1'
+ext.commonsBeanUtils = '1.9.4'
+ext.commonsLang3 = '3.9'
+ext.azureSpringBootMetricsStarter = '2.2.2'
+ext.passay = '1.5.0'
+
+
+allprojects {
+    apply plugin: 'java'
+
+    sourceCompatibility = '11'
+
+    compileJava {
+        options.encoding = 'UTF-8'
+    }
+
+    compileTestJava {
+        options.encoding = 'UTF-8'
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            url "http://maven.restlet.org"
+        }
+        maven {
+            url 'https://plugins.gradle.org/m2/'
+        }
+    }
+
+}

@@ -1,0 +1,51 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "String"
+        },
+        "containerRegistryName": {
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2019-05-01",
+            "name": "[parameters('containerRegistryName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "adminUserEnabled": true,
+                "policies": {
+                    "quarantinePolicy": {
+                        "status": "disabled"
+                    },
+                    "trustPolicy": {
+                        "type": "Notary",
+                        "status": "disabled"
+                    },
+                    "retentionPolicy": {
+                        "days": 7,
+                        "status": "disabled"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "containerRegistryUsername": {
+            "type": "string",
+            "value": "[listCredentials(concat('Microsoft.ContainerRegistry/registries/', parameters('containerRegistryName')),'2019-05-01').username]"
+        },
+        "containerRegistryPassword": {
+            "type": "string",
+            "value": "[listCredentials(concat('/Microsoft.ContainerRegistry/registries/', parameters('containerRegistryName')),'2019-05-01').passwords[0].value]"
+        }
+    }
+}

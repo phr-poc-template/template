@@ -1,0 +1,19 @@
+{
+  "patient": "demo01",
+  "time": 1578445970,
+  "device": {
+    "makerCode": "Maker-A",
+    "productCode": "BloodGlucoseMeter",
+    "version": "",
+    "serialId": "565654F8-1781-842E-0634-AD6E9138E5ED",
+    "name": "Maker-A BloodGlucoseMeter"
+  },
+  "vitals": {
+    "BS": {
+      "type": "BS",
+      "unit": "mg/dL",
+      "time": 1578445970,
+      "value": 301
+    }
+  }
+}

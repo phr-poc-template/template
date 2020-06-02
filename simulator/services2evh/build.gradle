@@ -1,0 +1,61 @@
+apply plugin: 'java'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+archivesBaseName = 'services2eventhub'
+
+dependencies {
+    // https://mvnrepository.com/artifact/com.microsoft.azure/azure-eventhubs
+    implementation group: 'com.microsoft.azure', name: 'azure-eventhubs', version: rootProject.ext.azureEventhubs
+    // https://mvnrepository.com/artifact/org.quartz-scheduler/quartz
+    implementation group: 'org.quartz-scheduler', name: 'quartz', version: rootProject.ext.quartz
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: rootProject.ext.jacksonDatabind
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: rootProject.ext.jackson
+    // https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils
+    implementation group: 'commons-beanutils', name: 'commons-beanutils', version: rootProject.ext.commonsBeanUtils
+    // https://mvnrepository.com/artifact/org.projectlombok/lombok
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: rootProject.ext.slf4j
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    implementation group: 'org.slf4j', name: 'slf4j-log4j12', version: rootProject.ext.slf4j
+}
+
+task executeBloodGlucoseMeter(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.device.BloodGlucoseMeter"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task executePulseOximeter(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.device.PulseOximeter"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task executeSleepDataScanDevice(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.device.SleepDataScanDevice"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task executeSphygmomanometer(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.device.Sphygmomanometer"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task executeThermometer(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.device.Thermometer"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task executeVoiceAssistant(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.device.VoiceAssistant"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task executeDemoDataCreator(type: JavaExec) {
+    main = "jp.co.tis.phr.simulator.evh.demo.DataCreator"
+    classpath = sourceSets.main.runtimeClasspath
+}

@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "schedule": "0 */30 * * * *",
+      "name": "myTimer",
+      "type": "timerTrigger",
+      "direction": "in"
+    },
+    {
+      "type": "serviceBus",
+      "name": "outputSbQueue",
+      "queueName": "sbq-dataexchange",
+      "connection": "ServiceBusConnection",
+      "direction": "out"
+    }
+  ],
+  "disabled": false
+}

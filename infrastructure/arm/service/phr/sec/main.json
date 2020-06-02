@@ -1,0 +1,383 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "templateUri": {
+      "type": "string"
+    },
+    "containerSasToken": {
+      "type": "string"
+    },
+    "environment": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "blobStorageAccountNameForData": {
+      "type": "string"
+    },
+    "blobStorageContainerNameForData": {
+      "type": "string"
+    },
+    "blobStorageAccountNameForRaw": {
+      "type": "string"
+    },
+    "blobStorageContainerNameForRaw": {
+      "type": "string"
+    },
+    "servicebusNamespace": {
+      "type": "string"
+    },
+    "cosmosdbAccountId": {
+      "type": "string"
+    },
+    "cosmosdbContainerNameForUserrecord": {
+      "type": "string"
+    },
+    "cosmosdbContainerNameForUser": {
+      "type": "string"
+    },
+    "cosmosdbPartitionKey": {
+      "type": "string"
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string"
+    },
+    "keyvaultName": {
+      "type": "string"
+    },
+    "userObjectIdForKeyvault": {
+      "type": "string"
+    },
+    "functionsStorageAccountName": {
+      "type": "string"
+    },
+    "dataExchangeClientId": {
+      "type": "string"
+    },
+    "dataExchangeClientSecret": {
+      "type": "securestring"
+    },
+    "functionNameForDataexchange": {
+      "type": "string"
+    },
+    "apiManagementName": {
+      "type": "string"
+    },
+    "endpointFunctionName": {
+      "type": "string"
+    },
+    "restResourcePath": {
+      "type": "string"
+    },
+    "functionNameForSbqTrigger": {
+      "type": "string"
+    },
+    "functionNameForCosmos2Blob": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "cosmosDbTemplateUrl": "[concat(parameters('templateUri'),'cosmosdb/cosmosdb_phrdb.json', parameters('containerSasToken'))]",
+    "servicebusTemplateUrl": "[concat(parameters('templateUri'),'servicebus/servicebus_phr.json', parameters('containerSasToken'))]",
+    "blobStorageTemplateUrl": "[concat(parameters('templateUri'),'storageaccount/storageaccount_blob.json', parameters('containerSasToken'))]",
+    "logAnalyticsWorkspaceTemplateUrl": "[concat(parameters('templateUri'),'log_analytics_workspace/log_analytics_workspace_phr_logs.json', parameters('containerSasToken'))]",
+    "functionsStorageTemplateUrl": "[concat(parameters('templateUri'),'storageaccount/storageaccount_functions_store.json', parameters('containerSasToken'))]",
+    "keyvaultTemplateUrl": "[concat(parameters('templateUri'),'keyvault/keyvault_phrkeyvault.json', parameters('containerSasToken'))]",
+    "functionsDataexchangeTemplateUrl": "[concat(parameters('templateUri'),'functions/functions_data_exchange.json', parameters('containerSasToken'))]",
+    "functionsSbqTriggerTemplateUrl": "[concat(parameters('templateUri'),'functions/functions_sbq_trigger.json', parameters('containerSasToken'))]",
+    "functionsCosmos2BlobTemplateUrl": "[concat(parameters('templateUri'),'functions/functions_cosmos2blob.json', parameters('containerSasToken'))]",
+    "cosmosDbAccountName": "[concat(parameters('cosmosdbAccountId'), '-' ,parameters('environment'))]",
+    "servicebusNameSpace": "[concat(parameters('servicebusNamespace'), '-', parameters('environment'))]",
+    "blobStorageAccountNameForData": "[concat(parameters('blobStorageAccountNameForData'), parameters('environment'))]",
+    "blobStorageAccountNameForRaw": "[concat(parameters('blobStorageAccountNameForRaw'), parameters('environment'))]",
+    "logAnalyticsWorkspaceName": "[concat(parameters('logAnalyticsWorkspaceName'), '-', parameters('environment'))]",
+    "keyvaultName": "[concat(parameters('keyvaultName'), '-', parameters('environment'))]",
+    "functionsStorageAccountName": "[concat(parameters('functionsStorageAccountName'), parameters('environment'))]",
+    "functionNameForDataexchange": "[concat(parameters('functionNameForDataexchange'), '-', parameters('environment'))]",
+    "endpoint": "[concat('https://', parameters('apiManagementName'), '-', parameters('environment'), '.azure-api.net/', parameters('endpointFunctionName'), '-', parameters('environment'), parameters('restResourcePath'))]",
+    "functionNameForSbqTrigger": "[concat(parameters('functionNameForSbqTrigger'), '-', parameters('environment'))]",
+    "functionNameForCosmos2Blob": "[concat(parameters('functionNameForCosmos2Blob'), '-', parameters('environment'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "servicebusTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('servicebusTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namespace": {
+            "value": "[variables('servicebusNameSpace')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "blobStorageTemplateForData",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('blobStorageTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('blobStorageAccountNameForData')]"
+          },
+          "containerName": {
+            "value": "[parameters('blobStorageContainerNameForData')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "blobStorageTemplateForRaw",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('blobStorageTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('blobStorageAccountNameForRaw')]"
+          },
+          "containerName": {
+            "value": "[parameters('blobStorageContainerNameForRaw')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "cosmosDbTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('cosmosDbTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "cosmosdbAccountId": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosdbContainerNameForUser": {
+            "value": "[parameters('cosmosdbContainerNameForUser')]"
+          },
+          "cosmosdbContainerNameForUserrecord": {
+            "value": "[parameters('cosmosdbContainerNameForUserrecord')]"
+          },
+          "cosmosdbPartitionKey": {
+            "value": "[parameters('cosmosdbPartitionKey')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "logAnalyticsWorkspaceTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('logAnalyticsWorkspaceTemplateUrl')]"
+        },
+        "parameters": {
+          "logAnalyticsWorkspaceName": {
+            "value": "[variables('logAnalyticsWorkspaceName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "keyvalutTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'logAnalyticsWorkspaceTemplate')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('keyvaultTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "keyvaultName": {
+            "value": "[variables('keyvaultName')]"
+          },
+          "userObjectIdForOwner": {
+            "value": "[parameters('userObjectIdForKeyvault')]"
+          },
+          "dataExchangeClientId": {
+            "value": "[parameters('dataExchangeClientId')]"
+          },
+          "dataExchangeClientSecret": {
+            "value": "[parameters('dataExchangeClientSecret')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsStorageTemplate",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsStorageTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('functionsStorageAccountName')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsDataexchangeTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'servicebusTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'keyvalutTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'functionsStorageTemplate')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsDataexchangeTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "triggerName": {
+            "value": "[variables('functionNameForDataexchange')]"
+          },
+          "storageAccountNameForPackage": {
+            "value": "[variables('functionsStorageAccountName')]"
+          },
+          "endpoint": {
+            "value": "[variables('endpoint')]"
+          },
+          "servicebusNameSpace": {
+            "value": "[variables('servicebusNameSpace')]"
+          },
+          "keyVaultName": {
+            "value": "[variables('keyvaultName')]"
+          },
+          "clientId": {
+            "value": "[parameters('dataExchangeClientId')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsSbqTriggerTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'servicebusTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'functionsStorageTemplate')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsSbqTriggerTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "triggerName": {
+            "value": "[variables('functionNameForSbqTrigger')]"
+          },
+          "storageAccountNameForPackage": {
+            "value": "[variables('functionsStorageAccountName')]"
+          },
+          "servicebusNameSpace": {
+            "value": "[variables('servicebusNameSpace')]"
+          },
+          "cosmosDbAccountName": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosDbAccessKey": {
+            "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          },
+          "storageAccountNameForData": {
+            "value": "[variables('blobStorageAccountNameForData')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "functionsCosmos2BlobTemplate",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'functionsStorageTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'cosmosDbTemplate')]",
+        "[resourceId('Microsoft.Resources/deployments', 'blobStorageTemplateForRaw')]"
+      ],
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('functionsCosmos2BlobTemplateUrl')]"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "triggerName": {
+            "value": "[variables('functionNameForCosmos2Blob')]"
+          },
+          "storageAccountNameForPackage": {
+            "value": "[variables('functionsStorageAccountName')]"
+          },
+          "blobContainerName": {
+            "value": "[parameters('blobStorageContainerNameForRaw')]"
+          },
+          "cosmosDbAccountName": {
+            "value": "[variables('cosmosDbAccountName')]"
+          },
+          "cosmosDbAccessKey": {
+            "value": "[reference('cosmosDbTemplate').outputs.cosmosDbAccountPrimaryKey.value]"
+          },
+          "storageAccountNameForTrigger": {
+            "value": "[variables('blobStorageAccountNameForRaw')]"
+          }
+        }
+      }
+    }
+  ]
+}

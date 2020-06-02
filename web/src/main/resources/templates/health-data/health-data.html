@@ -1,0 +1,176 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHR | 健康情報データ</title>
+</head>
+<body>
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" layout:fragment="content">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>健康情報データ</h1>
+    </section>
+
+    <!-- Main content -->
+    <section class="content">
+        <div class="row">
+            <div class="col-sm-8">
+                <div class="box box-info">
+                    <div class="box-header with-border">体温</div>
+                    <div class="box-body">
+                        <div class="btn-toolbar d-none d-md-block" role="toolbar" aria-label="Toolbar with buttons">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-info">
+                                    <input type="radio" name="bodyTemperatureTerms" autocomplete="off" value="today"
+                                           onchange="getBodyTemperatureWithTerm('bodyTemperatureTerms', '/body-temperature/graph', 'bodyTemperatureChart', '#bodyTemperatureDate', '#bodyTemperatureMessage')">
+                                    Day
+                                </label>
+                                <label class="btn btn-info active">
+                                    <input type="radio" name="bodyTemperatureTerms" autocomplete="off" value="week"
+                                           onchange="getBodyTemperatureWithTerm('bodyTemperatureTerms', '/body-temperature/graph', 'bodyTemperatureChart', '#bodyTemperatureDate', '#bodyTemperatureMessage')"
+                                           checked="">
+                                    Week
+                                </label>
+                                <label class="btn btn-info">
+                                    <input type="radio" name="bodyTemperatureTerms" autocomplete="off" value="twoweek"
+                                           onchange="getBodyTemperatureWithTerm('bodyTemperatureTerms', '/body-temperature/graph', 'bodyTemperatureChart', '#bodyTemperatureDate', '#bodyTemperatureMessage')">
+                                    2Weeks
+                                </label>
+                            </div>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="bodyTemperatureDate"></span>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="bodyTemperatureMessage"></span>
+                        </div>
+                        <div class="chart">
+                            <canvas id="bodyTemperatureChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="box box-info">
+                    <div class="box-header with-border">血圧</div>
+                    <div class="box-body">
+                        <div class="btn-toolbar d-none d-md-block" role="toolbar" aria-label="Toolbar with buttons">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-info">
+                                    <input type="radio" name="bloodPressureTerms" autocomplete="off" value="today"
+                                           onchange="getBloodPressureWithTerm('bloodPressureTerms', '/blood-pressure/graph', 'bloodPressureChart', '#bloodPressureDate', '#bloodPressureMessage')">
+                                    Day
+                                </label>
+                                <label class="btn btn-info active">
+                                    <input type="radio" name="bloodPressureTerms" autocomplete="off" value="week"
+                                           onchange="getBloodPressureWithTerm('bloodPressureTerms', '/blood-pressure/graph', 'bloodPressureChart', '#bloodPressureDate', '#bloodPressureMessage')"
+                                           checked="">
+                                    Week
+                                </label>
+                                <label class="btn btn-info">
+                                    <input type="radio" name="bloodPressureTerms" autocomplete="off" value="twoweek"
+                                           onchange="getBloodPressureWithTerm('bloodPressureTerms', '/blood-pressure/graph', 'bloodPressureChart', '#bloodPressureDate', '#bloodPressureMessage')">
+                                    2Weeks
+                                </label>
+                            </div>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="bloodPressureDate"></span>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="bloodPressureMessage"></span>
+                        </div>
+                        <div class="chart">
+                            <canvas id="bloodPressureChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-8">
+                <div class="box box-info">
+                    <div class="box-header with-border">脈拍</div>
+                    <div class="box-body">
+                        <div class="btn-toolbar d-none d-md-block" role="toolbar" aria-label="Toolbar with buttons">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-info">
+                                    <input type="radio" name="pulseRateTerms" autocomplete="off" value="today"
+                                           onchange="getPulseRateWithTerm('pulseRateTerms', '/pulse-rate/graph', 'pulseRateChart', '#pulseRateDate', '#pulseRateMessage')">
+                                    Day
+                                </label>
+                                <label class="btn btn-info active">
+                                    <input type="radio" name="pulseRateTerms" autocomplete="off" value="week"
+                                           onchange="getPulseRateWithTerm('pulseRateTerms', '/pulse-rate/graph', 'pulseRateChart', '#pulseRateDate', '#pulseRateMessage')"
+                                           checked="">
+                                    Week
+                                </label>
+                                <label class="btn btn-info">
+                                    <input type="radio" name="pulseRateTerms" autocomplete="off" value="twoweek"
+                                           onchange="getPulseRateWithTerm('pulseRateTerms', '/pulse-rate/graph', 'pulseRateChart', '#pulseRateDate', '#pulseRateMessage')">
+                                    2Weeks
+                                </label>
+                            </div>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="pulseRateDate"></span>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="pulseRateMessage"></span>
+                        </div>
+                        <div class="chart">
+                            <canvas id="pulseRateChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="box box-info">
+                    <div class="box-header with-border">SpO2</div>
+                    <div class="box-body">
+                        <div class="btn-toolbar d-none d-md-block" role="toolbar" aria-label="Toolbar with buttons">
+                            <div class="btn-group" data-toggle="buttons">
+                                <label class="btn btn-info">
+                                    <input type="radio" name="spO2Terms" autocomplete="off" value="today"
+                                           onchange="getSpO2WithTerm('spO2Terms', '/sp-o2/graph', 'spO2Chart', '#spO2Date', '#spO2Message')">
+                                    Day
+                                </label>
+                                <label class="btn btn-info active">
+                                    <input type="radio" name="spO2Terms" autocomplete="off" value="week"
+                                           onchange="getSpO2WithTerm('spO2Terms', '/sp-o2/graph', 'spO2Chart', '#spO2Date', '#spO2Message')"
+                                           checked="">
+                                    Week
+                                </label>
+                                <label class="btn btn-info">
+                                    <input type="radio" name="spO2Terms" autocomplete="off" value="twoweek"
+                                           onchange="getSpO2WithTerm('spO2Terms', '/sp-o2/graph', 'spO2Chart', '#spO2Date', '#spO2Message')">
+                                    2Weeks
+                                </label>
+                            </div>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="spO2Date"></span>
+                        </div>
+                        <div class="small text-muted">
+                            <span id="spO2Message"></span>
+                        </div>
+                        <div class="chart">
+                            <canvas id="spO2Chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+<div layout:fragment="footer-js">
+    <script th:src="@{/js/healthdata-graph.js}" type="text/javascript"></script>
+    <script>
+        getBodyTemperatureWithTerm('bodyTemperatureTerms', '/body-temperature/graph', 'bodyTemperatureChart', '#bodyTemperatureDate', '#bodyTemperatureMessage')
+        getBloodPressureWithTerm('bloodPressureTerms', '/blood-pressure/graph', 'bloodPressureChart', '#bloodPressureDate', '#bloodPressureMessage')
+        getPulseRateWithTerm('pulseRateTerms', '/pulse-rate/graph', 'pulseRateChart', '#pulseRateDate', '#pulseRateMessage')
+        getSpO2WithTerm('spO2Terms', '/sp-o2/graph', 'spO2Chart', '#spO2Date', '#spO2Message')
+    </script>
+</div>
+
+</body>
+</html>

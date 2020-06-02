@@ -1,0 +1,330 @@
+#!/bin/bash
+
+#####################################################################
+# PREREQUISITES
+#   1. You need the following command
+#      * bash
+#          If your OS is Windows, you can use WSL as Linux OS. 
+#      * az
+#          Azure CLI
+#      * jq
+#          For extracting values from parameters.example.json
+#      * npm
+#          For assembling Node.js functions and deployment
+#      * func
+#          Azure Functions Core Tools(see https://www.npmjs.com/package/azure-functions-core-tools for installation)
+#   2. You need an Azure user which has a role as 'Owner' in your subscription and has a role as 'Global Administrator' in your AD
+#####################################################################
+
+if [ "$1" = "" ]; then
+  echo "You must provide an absolute path for this project root as 1st argument of this command. e.g.) /mnt/c/repository/phr/poc"
+  exit 1
+fi
+
+if [ "$2" = "" ]; then
+  echo "You must provide an Azure user id as 2nd argument of this command. e.g.) tis@tis.co.jp"
+  exit 1
+fi
+
+az account show
+
+if [ $? != 0 ]; then
+  echo "You have to login to Azure using az login prior to executing this script"
+  exit 1
+fi
+
+### YOU MUST DO TO UPDATE base_path based on your environment ###
+# Enter your local repository path which you cloned from Git
+export base_path=$1
+#################################################################
+
+### YOU MUST DO TO UPDATE user_name based on your environment ###
+# Enter your user name in Azure Active Directory used for this deployment processes
+export user_name=$2
+#################################################################
+
+# Environment name
+environment=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.environment.value')
+
+# Location
+location=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.location.value')
+
+# resource group name
+export resource_group=rg-phrsec-${environment}
+
+# A name of blob storage which is used as ARM Template store
+export blob_storage_name=stsecarmtemplate${environment}
+
+echo "#################################################################"
+echo "# Create Resource Group for this deployment"
+echo "#################################################################"
+# Create Resource Group for this deployment
+rg_is_existed=$(az group exists -n $resource_group)
+
+if [ $rg_is_existed != "true" ]; then
+  az group create \
+    --name $resource_group \
+    --location $location
+else
+  echo "Resource Group: "${resource_group}" is alreday exisetd. Skip creating the resource groups"
+fi
+
+echo "#################################################################"
+echo "# Create Storage Account and Blob Container under your resource group for storing Azure Resource Manager Template"
+echo "#################################################################"
+# Create Storage Account and Blob Container under your resource group for storing Azure Resource Manager Template
+st_is_already_existed=$(az storage account check-name --name $blob_storage_name | jq -r ".nameAvailable")
+
+if [ $st_is_already_existed = "true" ]; then
+  az storage account create \
+      --resource-group $resource_group \
+      --location $location \
+      --sku Standard_LRS \
+      --kind Storage \
+      --name $blob_storage_name
+  connection=$(az storage account show-connection-string \
+      --resource-group $resource_group \
+      --name $blob_storage_name \
+      --query connectionString)
+  az storage container create \
+      --name arm-template \
+      --public-access Off \
+      --connection-string $connection
+else
+  echo "A storage account as linked template store: "${blob_storage_name}" is alreday in use. Skip creating the storage account."
+fi
+
+# Put the templates into designated path in the Blob Container
+cd $base_path/infrastructure/arm/service/phr/sec
+
+echo "#################################################################"
+echo "# Upload linked ARM templates into Blob storage created earlier"
+echo "#################################################################"
+## Retrieve connection for Blob storage
+connection=$(az storage account show-connection-string \
+    --resource-group $resource_group \
+    --name $blob_storage_name \
+    --query connectionString)
+
+## For Key Vault
+az storage blob upload \
+    --container-name arm-template \
+    --file keyvault/keyvault_phrkeyvault.json \
+    --name keyvault/keyvault_phrkeyvault.json \
+    --connection-string $connection
+
+## For Cosmos DB
+az storage blob upload \
+    --container-name arm-template \
+    --file cosmosdb/cosmosdb_phrdb.json \
+    --name cosmosdb/cosmosdb_phrdb.json \
+    --connection-string $connection
+
+## For ServiceBus
+az storage blob upload \
+    --container-name arm-template \
+    --file servicebus/servicebus_phr.json \
+    --name servicebus/servicebus_phr.json \
+    --connection-string $connection
+
+## For StorageAccount
+az storage blob upload \
+    --container-name arm-template \
+    --file storageaccount/storageaccount_blob.json \
+    --name storageaccount/storageaccount_blob.json \
+    --connection-string $connection
+
+## For Functions
+### For Storage Account used as a store of Functions
+az storage blob upload \
+    --container-name arm-template \
+    --file storageaccount/storageaccount_functions_store.json \
+    --name storageaccount/storageaccount_functions_store.json \
+    --connection-string $connection
+
+### For Dataexchange Function
+az storage blob upload \
+    --container-name arm-template \
+    --file functions/functions_data_exchange.json \
+    --name functions/functions_data_exchange.json \
+    --connection-string $connection
+### For ServiceBus Queue Trigger
+az storage blob upload \
+    --container-name arm-template \
+    --file functions/functions_sbq_trigger.json \
+    --name functions/functions_sbq_trigger.json \
+    --connection-string $connection
+### For CosmosDB Trigger
+az storage blob upload \
+    --container-name arm-template \
+    --file functions/functions_cosmos2blob.json \
+    --name functions/functions_cosmos2blob.json \
+    --connection-string $connection
+
+## For Log Analytics Workspace
+az storage blob upload \
+    --container-name arm-template \
+    --file log_analytics_workspace/log_analytics_workspace_phr_logs.json \
+    --name log_analytics_workspace/log_analytics_workspace_phr_logs.json \
+    --connection-string $connection
+
+echo "#################################################################"
+echo "# Deploy resources using ARM"
+echo "#################################################################"
+# Generate SAS(Shared Access Signature) for accessing the templates from Azure Resource Manager
+expiretime=$(date -u -d '30 minutes' +%Y-%m-%dT%H:%MZ)
+connection=$(az storage account show-connection-string \
+    --resource-group $resource_group \
+    --name $blob_storage_name \
+    --query connectionString)
+token=$(az storage account generate-sas \
+    --resource-type o \
+    --services b \
+    --expiry $expiretime \
+    --permissions r \
+    --output tsv \
+    --connection-string $connection)
+url=$(az storage blob url \
+    --container-name arm-template \
+    --name dummy.json \
+    --output tsv \
+    --connection-string $connection | sed s/dummy\.json//)
+userObjectId=$(az ad user show \
+    --id $user_name \
+    --query objectId \
+    --output tsv)
+
+# Rerieve Client ID and Client Secret for data exchange trigger (OAuth)
+clientId=$(az ad app list --display-name apl-phrpri-dataexchange-${environment} | jq -r '.[0].appId')
+clientSecret=$(az ad app list --display-name apl-phrpri-dataexchange-${environment} | jq -r '.[0].appRoles[0].id')
+
+# Deploy resources using the templates
+az group deployment create \
+  --resource-group $resource_group \
+  --handle-extended-json-format \
+  --template-file main.json \
+  --parameters parameters.example.json templateUri=$url containerSasToken='?'$token userObjectIdForKeyvault=$userObjectId dataExchangeClientId=$clientId dataExchangeClientSecret=$clientSecret
+
+if [ $? != 0 ]; then
+  echo "Unexpected error occur during deployment"
+  echo "Please retry deployment using this script."
+  exit 1
+fi
+
+echo "#################################################################"
+echo "# Deploy Azure functions for Timer trigger which retrieve records from Cosmos DB via REST API with client credentials flow using OAuth2"
+echo "#################################################################"
+# Assign Managed ID to functions for data exchaneg timer trigger
+function_dataexchange_name=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.functionNameForDataexchange.value')
+
+az webapp identity assign \
+  --name ${function_dataexchange_name}-${environment} \
+  --resource-group $resource_group
+
+sleep 1m
+
+# Update Key Vault configuration for accessing secrets from dataexchange timer trigger
+function_dataexchange_object_id=$(az ad sp list \
+  --display-name ${function_dataexchange_name}-${environment} \
+  --query "[0].objectId" \
+  --output tsv)
+
+if [ $? != 0 ]; then
+  echo "Unexpected error occur during retrieving information for the managed id."
+  echo "It might occur just after creating the managed id"
+  echo "Please retry deployment using this script."
+  exit 1
+fi
+
+subscription_id=$(az account show \
+  --query "id"\
+  --output tsv)
+
+keyvault_name=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.keyvaultName.value')
+
+az role assignment create \
+  --assignee-object-id $function_dataexchange_object_id \
+  --role "Key Vault Contributor" \
+  --scope /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/Microsoft.KeyVault/vaults/${keyvault_name}-${environment}
+
+az keyvault set-policy --name ${keyvault_name}-${environment} \
+  --secret-permissions get list set delete recover backup restore \
+  --object-id $function_dataexchange_object_id \
+  --resource-group $resource_group
+
+# Deploy functions for data exchange
+cd $base_path/functions/phrsec-dataexchange/
+
+npm ci
+func azure functionapp publish ${function_dataexchange_name}-${environment} --javascript
+
+echo "#################################################################"
+echo "# Deploy Azure functions for ServiceBus Queue Trigger"
+echo "#################################################################"
+# Deploy functions for data exchange
+function_name_sbq_trigger=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.functionNameForSbqTrigger.value')
+
+cd $base_path/functions/phrsec-sbq-trigger/
+
+npm ci
+func azure functionapp publish ${function_name_sbq_trigger}-${environment} --javascript
+
+echo "#################################################################"
+echo "# Deploy Azure functions for Cosmos DB Trigger"
+echo "#################################################################"
+# Assign Managed ID to functions for cosmos db trigger
+function_name_cosmos2blob=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.functionNameForCosmos2Blob.value')
+
+az webapp identity assign \
+  --name ${function_name_cosmos2blob}-${environment} \
+  --resource-group $resource_group
+
+sleep 1m
+
+# Update Blob Storage configuration for accessing from cosmos db trigger
+function_cosmos2blob_object_id=$(az ad sp list \
+  --display-name ${function_name_cosmos2blob}-${environment} \
+  --query "[0].objectId" \
+  --output tsv)
+
+if [ $? != 0 ]; then
+  echo "Unexpected error occur during retrieving information for the managed id."
+  echo "It might occur just after creating the managed id"
+  echo "Please retry deployment using this script."
+  exit 1
+fi
+
+blob_storage_account=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.blobStorageAccountNameForRaw.value')
+
+subscription_id=$(az account show \
+  --query "id"\
+  --output tsv)
+
+az role assignment create \
+  --assignee-object-id $function_cosmos2blob_object_id \
+  --role "Storage Blob Data Contributor" \
+  --scope /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/Microsoft.Storage/storageAccounts/${blob_storage_account}${environment}
+
+# Deploy functions for cosmos db trigger
+cd $base_path/functions/phrsec-cosdb-trigger/
+
+npm ci
+func azure functionapp publish ${function_name_cosmos2blob}-${environment} --javascript
+
+echo "#################################################################"
+echo "# Upload products.json refered by ServiceBus Queue Trigger"
+echo "#################################################################"
+## Retrieve connection for Blob storage
+blob_refs=$(cat $base_path/infrastructure/arm/service/phr/sec/parameters.example.json | jq -r '.parameters.blobStorageAccountNameForData.value')
+connection=$(az storage account show-connection-string \
+    --resource-group $resource_group \
+    --name ${blob_refs}${environment} \
+    --query connectionString)
+
+az storage blob upload \
+    --container-name data \
+    --file $base_path/infrastructure/arm/service/phr/sec/products.json \
+    --name products.json \
+    --connection-string $connection
+
+exit 0

@@ -1,0 +1,44 @@
+@CHARSET "UTF-8";
+
+html {
+    font-size:16px
+}
+
+body {
+    font-family: 'メイリオ','Hiragino Kaku Gothic Pro',sans-serif;
+    background-color:white;
+}
+
+.box{
+    wide:100%;
+    text-align:center;
+}
+
+p{
+    margin-left:1em;
+    margin-right:auto;
+    margin-top:0.5em;
+    margin-bottom:0.5em;
+}
+
+input[type="text"]{
+
+    margin-left:1em;
+    margin-top:0.5em;
+    margin-bottom:0.5em;
+    height:2em;
+    line-height:2em;
+    paddhing:1em;
+
+}
+
+input[type="password"]{
+
+    margin-left:1em;
+    margin-top:0.5em;
+    margin-bottom:0.5em;
+    height:2em;
+    line-height:2em;
+    paddhing:1em;
+
+}

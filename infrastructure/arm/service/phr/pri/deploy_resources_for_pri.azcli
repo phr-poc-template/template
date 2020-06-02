@@ -1,0 +1,542 @@
+#!/bin/bash
+
+#####################################################################
+# PREREQUISITES
+#   1. You need the following command
+#      * bash
+#          If your OS is Windows, you can use WSL as Linux OS. 
+#      * az
+#          Azure CLI
+#      * jq
+#          For extracting values from parameters.example.json
+#      * npm
+#          For assembling Node.js functions and deployment
+#      * func
+#          Azure Functions Core Tools(see https://www.npmjs.com/package/azure-functions-core-tools for installation)
+#      * java
+#          You need to install that as 11
+#   2. You need an Azure user which has a role as 'Owner' in your subscription and has a role as 'Global Administrator' in your AD
+#####################################################################
+
+if [ "$1" = "" ]; then
+  echo "You must provide an absolute path for this project root as 1st argument of this command. e.g.) /mnt/c/repository/phr/poc"
+  exit 1
+fi
+
+if [ "$2" = "" ]; then
+  echo "You must provide an Azure user id as 2nd argument of this command. e.g.) tis@tis.co.jp"
+  exit 1
+fi
+
+az account show
+
+if [ $? != 0 ]; then
+  echo "You have to login to Azure using az login prior to executing this script"
+  exit 1
+fi
+
+### YOU MUST DO TO UPDATE base_path based on your environment ###
+# Enter your local repository path which you cloned from Git
+export base_path=$1
+#################################################################
+
+### YOU MUST DO TO UPDATE user_name based on your environment ###
+# Enter your user name in Azure Active Directory used for this deployment processes
+export user_name=$2
+#################################################################
+
+# Environment name
+environment=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.environment.value')
+
+# Location
+location=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.location.value')
+
+# resource group name
+export resource_group=rg-phrpri-${environment}
+
+# A name of blob storage which is used as ARM Template store
+export blob_storage_name=starmtemplate${environment}
+
+echo "#################################################################"
+echo "# Create Resource Group for this deployment"
+echo "#################################################################"
+rg_is_existed=$(az group exists -n $resource_group)
+
+if [ $rg_is_existed != "true" ]; then
+  az group create \
+    --name $resource_group \
+    --location $location
+else
+  echo "Resource Group: "${resource_group}" is alreday exisetd. Skip creating the resource groups"
+fi
+
+echo "#################################################################"
+echo "# Create Storage Account and Blob Container under your resource group for storing Azure Resource Manager Template"
+echo "#################################################################"
+st_is_already_existed=$(az storage account check-name --name $blob_storage_name | jq -r ".nameAvailable")
+
+if [ $st_is_already_existed = "true" ]; then
+  az storage account create \
+      --resource-group $resource_group \
+      --location $location \
+      --sku Standard_LRS \
+      --kind Storage \
+      --name $blob_storage_name
+  connection=$(az storage account show-connection-string \
+      --resource-group $resource_group \
+      --name $blob_storage_name \
+      --query connectionString)
+  az storage container create \
+      --name arm-template \
+      --public-access Off \
+      --connection-string $connection
+else
+  echo "A storage account as linked template store: "${blob_storage_name}" is alreday in use. Skip creating the storage account."
+fi
+
+cd $base_path/infrastructure/arm/service/phr/pri
+
+echo "#################################################################"
+echo "# Create an application principal for REST API with client credentials flow using OAuth2"
+echo "#################################################################"
+# Create UUID for registered apps that will be used to access from 2ndary service
+registeredAppId=$(az ad app list --display-name apl-phrpri-dataexchange-${environment} | jq -r '.[0].appId')
+guid=$(az ad app list --display-name apl-phrpri-dataexchange-${environment} | jq -r '.[0].appRoles[0].id')
+
+if [ $registeredAppId = "null" ]; then
+
+  guid=$(uuidgen)
+  app_role_manifest=$(echo '[ {"allowedMemberTypes": [ "Application" ],  "description": "APIアクセスを許可します",  "displayName": "APIアクセス", "id": "guid", "isEnabled": true, "lang": null, "origin": "Application", "value": "API.Request" } ]')
+  echo $app_role_manifest | sed -e 's/guid/'$guid'/g' > app_role_manifest.json
+
+  # Create client secret for registered apps
+  userObjectId=$(az ad user show \
+      --id $user_name \
+      --query objectId \
+      --output tsv)
+
+  ## Create Application Principal for APIM
+  registeredAppId=$(az ad app create --display-name apl-phrpri-dataexchange-${environment} \
+                   --end-date 2200-12-31 \
+                   --password $guid \
+                   --app-roles @app_role_manifest.json \
+                   --output tsv \
+                   --query appId)
+
+  rm -f app_role_manifest.json
+
+  # Update API URI
+  az ad app update --id $registeredAppId \
+                   --identifier-uris api://$registeredAppId
+
+  ## Update required resource access for exposing the application principal with an application permission
+  resourceAccessManifest=$(echo '[ { "resourceAppId": "00000003-0000-0000-c000-000000000000",  "resourceAccess": [ { "id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d",  "type": "Scope" } ]  }, { "resourceAppId": "registeredAppId", "resourceAccess": [ { "id": "guid",  "type": "Role" } ] } ]')
+  resourceAccessManifest=$(echo $resourceAccessManifest | sed -e 's/guid/'$guid'/g')
+  echo $resourceAccessManifest | sed -e 's/registeredAppId/'$registeredAppId'/g' > resource_access_manifest.json
+
+  az ad app update --id $registeredAppId \
+                   --required-resource-accesses @resource_access_manifest.json
+
+  rm -f resource_access_manifest.json
+
+  az ad app owner add --id $registeredAppId \
+                      --owner-object-id $userObjectId
+
+  ## Create a service principal for the registerd app
+  az ad sp create --id $registeredAppId
+
+  ## Grant permission as an administrator
+  sleep 1m
+
+  az ad app permission admin-consent --id $registeredAppId
+
+  if [ $? != 0 ]; then
+    echo "Unexpected error occur during delegating a permission for the application principal."
+    echo "It might occur just after creating the principal"
+    echo "Please try the following command. If it works, retry deployment."
+    echo "az ad app permission admin-consent --id "$registeredAppId
+    exit 1
+  fi
+
+else
+  echo "An application principal is already existed. Skip creating that."
+fi
+
+echo "#################################################################"
+echo "# Upload linked ARM templates into Blob storage created earlier"
+echo "#################################################################"
+## Retrieve connection for Blob storage
+connection=$(az storage account show-connection-string \
+    --resource-group $resource_group \
+    --name $blob_storage_name \
+    --query connectionString)
+
+## For Cosmos DB
+az storage blob upload \
+    --container-name arm-template \
+    --file cosmosdb/cosmosdb_phrdb.json \
+    --name cosmosdb/cosmosdb_phrdb.json \
+    --connection-string $connection
+
+## For EventHub
+az storage blob upload \
+    --container-name arm-template \
+    --file eventhub/eventhub_phr.json \
+    --name eventhub/eventhub_phr.json \
+    --connection-string $connection
+
+## For StorageAccount
+az storage blob upload \
+    --container-name arm-template \
+    --file storageaccount/storageaccount_blob.json \
+    --name storageaccount/storageaccount_blob.json \
+    --connection-string $connection
+
+## For StreamAnalytics
+az storage blob upload \
+    --container-name arm-template \
+    --file stream_analytics/stream_analytics_evh.json \
+    --name stream_analytics/stream_analytics_evh.json \
+    --connection-string $connection
+az storage blob upload \
+    --container-name arm-template \
+    --file stream_analytics/stream_analytics_aih.json \
+    --name stream_analytics/stream_analytics_aih.json \
+    --connection-string $connection
+
+## For Container Registry
+az storage blob upload \
+    --container-name arm-template \
+    --file container_registry/container_registry_phr.json \
+    --name container_registry/container_registry_phr.json \
+    --connection-string $connection
+
+## For Log Analytics Workspace
+az storage blob upload \
+    --container-name arm-template \
+    --file log_analytics_workspace/log_analytics_workspace_phr_logs.json \
+    --name log_analytics_workspace/log_analytics_workspace_phr_logs.json \
+    --connection-string $connection
+
+## For Key Vault
+az storage blob upload \
+    --container-name arm-template \
+    --file keyvault/keyvault_phrkeyvault.json \
+    --name keyvault/keyvault_phrkeyvault.json \
+    --connection-string $connection
+
+## For Functions
+### For Storage Account used as a store of Functions
+az storage blob upload \
+    --container-name arm-template \
+    --file storageaccount/storageaccount_functions_store.json \
+    --name storageaccount/storageaccount_functions_store.json \
+    --connection-string $connection
+
+### For Cosmos DB Trigger as Functions
+az storage blob upload \
+    --container-name arm-template \
+    --file functions/functions_cosmos2blob.json \
+    --name functions/functions_cosmos2blob.json \
+    --connection-string $connection
+
+### For Data Exchange Function
+az storage blob upload \
+    --container-name arm-template \
+    --file functions/functions_data_exchange.json \
+    --name functions/functions_data_exchange.json \
+    --connection-string $connection
+
+## For IotHub
+az storage blob upload \
+    --container-name arm-template \
+    --file iot_hub/iot_hub_phr.json \
+    --name iot_hub/iot_hub_phr.json \
+    --connection-string $connection
+
+## For API Management for Data Exchange
+az storage blob upload \
+    --container-name arm-template \
+    --file api_management/api_management_phr.json \
+    --name api_management/api_management_phr.json \
+    --connection-string $connection
+
+echo "#################################################################"
+echo "# Deploy resources using ARM"
+echo "#################################################################"
+# Generate SAS(Shared Access Signature) for accessing the templates from Azure Resource Manager
+expiretime=$(date -u -d '30 minutes' +%Y-%m-%dT%H:%MZ)
+connection=$(az storage account show-connection-string \
+    --resource-group $resource_group \
+    --name $blob_storage_name \
+    --query connectionString)
+token=$(az storage account generate-sas \
+    --resource-type o \
+    --services b \
+    --expiry $expiretime \
+    --permissions r \
+    --output tsv \
+    --connection-string $connection)
+url=$(az storage blob url \
+    --container-name arm-template \
+    --name dummy.json \
+    --output tsv \
+    --connection-string $connection | sed s/dummy\.json//)
+userObjectId=$(az ad user show \
+    --id $user_name \
+    --query objectId \
+    --output tsv)
+
+# Deploy resources using the templates
+az group deployment create \
+  --resource-group $resource_group \
+  --handle-extended-json-format \
+  --template-file main.json \
+  --parameters parameters.example.json templateUri=$url containerSasToken='?'$token userObjectIdForKeyvault=$userObjectId clientIdForRegisteredAppInAd=$registeredAppId clientSecretForRegisteredAppInAd=$guid
+
+if [ $? != 0 ]; then
+  echo "Unexpected error occur during deployment"
+  echo "Please retry deployment using this script."
+  exit 1
+fi
+
+echo "#################################################################"
+echo "# Create Resource Group for App Service"
+echo "#################################################################"
+# Create resource group for App Service
+export resource_group_app_service=rg-phrpri-azapp-${environment}
+
+rg_azapp_is_existed=$(az group exists -n $resource_group_app_service)
+
+if [ $rg_azapp_is_existed != "true" ]; then
+  az group create \
+    --name $resource_group_app_service \
+    --location $location
+else    
+  echo "Resource Group: "${resource_group_app_service}" is alreday exisetd. Skip creating the resource groups"
+fi
+
+echo "#################################################################"
+echo "# Create App Service Plan for App Service"
+echo "#################################################################"
+# Create App Service Plan
+app_service_plan_is_existed=$(az appservice plan show --resource-group $resource_group_app_service --name azapps-web-plan-${environment})
+
+if [ "$app_service_plan_is_existed" = '' ]; then
+  az appservice plan create \
+    --resource-group $resource_group_app_service \
+    --name azapps-web-plan-${environment} \
+    --sku P1V2 \
+    --location $location \
+    --is-linux
+else
+  echo "App Service Plan: azapps-web-plan-"${environment}" is already exisetd. Skip creating an app service plan."
+fi
+
+echo "#################################################################"
+echo "# Create Application Insight for App Service"
+echo "#################################################################"
+export azapps_name=azapp-phrpri-${environment}
+
+az extension add -n application-insights
+
+appInsightsKey=$(az monitor app-insights component create \
+  --app ${azapps_name} \
+  --location $location \
+  --resource-group $resource_group_app_service | jq -r '.instrumentationKey')
+
+echo "#################################################################"
+echo "# Upload a conatiner image as web application into ACR created earlier deployment"
+echo "#################################################################"
+container_registry_name=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.containerRegistryName.value')
+keyvault_name=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.keyvaultName.value')
+cosmosdb_name=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.cosmosdbAccountId.value')
+
+# Update USERNAME and PASSWORD in web/gradle.properties for uploading a container image into ACR
+container_registry_user_name=$(az group deployment show \
+  --name containerRegistryTemplate \
+  --resource-group $resource_group | jq -r '.properties.outputs.containerRegistryUsername.value')
+
+container_registry_password=$(az group deployment show \
+  --name containerRegistryTemplate \
+  --resource-group $resource_group | jq -r '.properties.outputs.containerRegistryPassword.value')
+
+# Upload a container image into ACR
+cd $base_path
+export image_version=0.0.1
+./gradlew web:jib -PACR_NAME=${container_registry_user_name} -PACR_PASSWORD=${container_registry_password} -PACR_VERSION=$image_version
+
+echo "#################################################################"
+echo "# Deploy the container into App Service"
+echo "#################################################################"
+# Create web apps
+az webapp create \
+  --resource-group $resource_group_app_service \
+  --plan azapps-web-plan-${environment} \
+  --name $azapps_name \
+  --deployment-container-image-name ${container_registry_name}${environment}.azurecr.io/web:${image_version}
+
+# Set configurations as a container
+export container_registry_name_with_env=${container_registry_name}${environment}
+az webapp config container set --name $azapps_name \
+  --resource-group $resource_group_app_service \
+  --docker-custom-image-name ${container_registry_name_with_env}.azurecr.io/web:${image_version} \
+  --docker-registry-server-url https://$container_registry_name_with_env.azurecr.io \
+  --docker-registry-server-user $container_registry_user_name \
+  --docker-registry-server-password $container_registry_password
+
+# Enable Continuous Deployment Option
+az webapp deployment container config --enable-cd true \
+  --name $azapps_name \
+  --resource-group $resource_group_app_service
+
+# Set environment variables for the container
+az webapp config appsettings set \
+  --settings SPRING_PROFILES_ACTIVE=development \
+  COSMOSDB_URI=https://${cosmosdb_name}-${environment}.documents.azure.com:443/ \
+  COSMOSDB_DATABASE=phrdb \
+  COSMOSDB_KEY_SECRET=cosmosdb-key \
+  KEYVAULT_NAME=kv-phrpri-${environment} \
+  KEYVAULT_RG=$resource_group \
+  INSTRUMENTATION_KEY=$appInsightsKey \
+  IP_ADDRESSES_FILTER=13.71.128.0/19,13.73.0.0/19,13.78.0.0/17,13.104.149.64/26,13.104.150.128/26,13.104.221.0/24,20.37.96.0/19,20.38.116.0/23,20.40.88.0/21,20.40.96.0/21,20.43.64.0/19,20.44.128.0/18,20.46.112.0/20,20.46.160.0/19,20.47.12.0/24,20.47.101.0/24,20.48.0.0/18,20.188.0.0/19,20.190.141.128/25,20.190.166.0/24,23.98.57.64/26,23.100.96.0/21,23.102.64.0/19,40.79.184.0/21,40.79.192.0/21,40.79.208.0/24,40.81.192.0/19,40.82.48.0/22,40.87.200.0/22,40.90.16.160/27,40.90.128.80/28,40.90.132.64/28,40.90.142.0/27,40.90.142.192/28,40.90.148.224/27,40.90.152.192/27,40.90.158.0/26,40.115.128.0/17,40.126.13.128/25,40.126.38.0/24,52.108.228.0/23,52.109.52.0/22,52.111.232.0/24,52.114.32.0/22,52.115.38.0/24,52.136.31.0/24,52.140.192.0/18,52.155.96.0/19,52.156.32.0/19,52.185.128.0/18,52.232.155.0/24,52.239.144.0/23,52.243.32.0/19,52.245.36.0/22,52.246.160.0/19,52.253.96.0/19,52.253.161.0/24,104.41.160.0/19,104.44.88.224/27,104.44.91.224/27,104.44.94.112/28,104.46.208.0/20,138.91.0.0/20,191.237.240.0/23 \
+  -g $resource_group_app_service \
+  -n $azapps_name
+
+# Set managed id to app service
+az webapp identity assign \
+  --name $azapps_name \
+  --resource-group $resource_group_app_service
+
+sleep 1m
+
+# Update Key Vault configuration for accessing secrets from ACI
+container_instance_object_id=$(az ad sp list \
+  --display-name $azapps_name \
+  --query "[0].objectId" \
+  --output tsv)
+
+if [ $? != 0 ]; then
+  echo "Unexpected error occur during retrieving information for the managed id."
+  echo "It might occur just after creating the managed id"
+  echo "Please retry deployment using this script."
+  exit 1
+fi
+
+
+subscription_id=$(az account show \
+  --query "id"\
+  --output tsv)
+
+az role assignment create \
+  --assignee-object-id $container_instance_object_id \
+  --role "Key Vault Contributor" \
+  --scope /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/Microsoft.KeyVault/vaults/${keyvault_name}-${environment}
+
+az keyvault set-policy --name ${keyvault_name}-${environment} \
+  --secret-permissions get list set delete recover backup restore \
+  --object-id $container_instance_object_id \
+  --resource-group $resource_group
+
+# Set diagnostic that is sent into log analytics workspace
+log_analytics_workspace_name=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.logAnalyticsWorkspaceName.value')
+
+az monitor diagnostic-settings create \
+  --name ${azapps_name}-diagnostics \
+  -g $resource_group_app_service \
+  --logs    '[{"category": "AppServiceHTTPLogs","enabled": true}, {"category": "AppServiceConsoleLogs","enabled": true}, {"category": "AppServiceAppLogs","enabled": true}, {"category": "AppServiceFileAuditLogs","enabled": true}, {"category": "AppServiceAuditLogs","enabled": true}]' \
+  --metrics '[{"category": "AllMetrics","enabled": true}]' \
+  --resource /subscriptions/$subscription_id/resourceGroups/$resource_group_app_service/providers/Microsoft.Web/sites/$azapps_name \
+  --workspace /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/microsoft.operationalinsights/workspaces/${log_analytics_workspace_name}-${environment}
+
+# Set https only option to redirect all trafic to https
+az webapp update \
+  --https-only true \
+  --name $azapps_name \
+  --resource-group $resource_group_app_service
+
+# Restart the container
+az webapp restart --name $azapps_name \
+  --resource-group $resource_group_app_service
+
+echo "#################################################################"
+echo "# Deploy Azure functions for Cosmos DB Trigger"
+echo "#################################################################"
+# Assign Managed ID to functions for cosmos db trigger
+function_name_cosmos2blob=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.functionNameForCosmos2Blob.value')
+
+az webapp identity assign \
+  --name ${function_name_cosmos2blob}-${environment} \
+  --resource-group $resource_group
+
+sleep 1m
+
+# Update Blob Storage configuration for accessing from cosmos db trigger
+function_cosmos2blob_object_id=$(az ad sp list \
+  --display-name ${function_name_cosmos2blob}-${environment} \
+  --query "[0].objectId" \
+  --output tsv)
+
+if [ $? != 0 ]; then
+  echo "Unexpected error occur during retrieving information for the managed id."
+  echo "It might occur just after creating the managed id"
+  echo "Please retry deployment using this script."
+  exit 1
+fi
+
+blob_storage_account=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.blobStorageAccountNameForRaw.value')
+
+subscription_id=$(az account show \
+  --query "id"\
+  --output tsv)
+
+az role assignment create \
+  --assignee-object-id $function_cosmos2blob_object_id \
+  --role "Storage Blob Data Contributor" \
+  --scope /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/Microsoft.Storage/storageAccounts/${blob_storage_account}${environment}
+
+# Deploy functions for cosmos db trigger
+cd $base_path/functions/phrpri-cosdb-trigger/
+
+npm ci
+func azure functionapp publish ${function_name_cosmos2blob}-${environment} --javascript
+
+echo "#################################################################"
+echo "# Deploy Azure functions for REST API with crient credentials flow using OAuth2"
+echo "#################################################################"
+# Deploy functions for data exchange
+function_name_primary_data_exchange=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.functionNameForDataExchange.value')
+
+cd $base_path/functions/phrpri-dataexchange/
+
+npm ci
+func azure functionapp publish ${function_name_primary_data_exchange}-${environment} --javascript
+
+echo "#################################################################"
+echo "# Upload products.json refered by Stream Analytics"
+echo "#################################################################"
+## Retrieve connection for Blob storage
+blob_refs=$(cat $base_path/infrastructure/arm/service/phr/pri/parameters.example.json | jq -r '.parameters.blobStorageAccountNameForData.value')
+connection=$(az storage account show-connection-string \
+    --resource-group $resource_group \
+    --name ${blob_refs}${environment} \
+    --query connectionString)
+
+az storage blob upload \
+    --container-name data \
+    --file $base_path/infrastructure/arm/service/phr/pri/products.json \
+    --name 2020-01-01/00-00/products.json \
+    --connection-string $connection
+
+echo "#################################################################"
+echo "# Create a diagnostic log settings for Cosmos DB"
+echo "#################################################################"
+az monitor diagnostic-settings create \
+  --name ${cosmosdb_name}-${environment}-diagnostics \
+  -g $resource_group \
+  --logs    '[{"category": "DataPlaneRequests","enabled": true},{"category": "MongoRequests","enabled": true},{"category": "QueryRuntimeStatistics","enabled": true},{"category": "PartitionKeyStatistics","enabled": true},{"category": "PartitionKeyRUConsumption","enabled": true},{"category": "ControlPlaneRequests","enabled": true},{"category": "CassandraRequests","enabled": true}]' \
+  --metrics '[{"category": "Requests","enabled": true}]' \
+  --resource /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/Microsoft.DocumentDB/databaseAccounts/${cosmosdb_name}-${environment} \
+  --workspace /subscriptions/$subscription_id/resourceGroups/$resource_group/providers/microsoft.operationalinsights/workspaces/${log_analytics_workspace_name}-${environment}
+
+exit 0

@@ -1,0 +1,6 @@
+{"productCode": "Thermometer","reliability": "2", "recordType": "Device"}
+{"productCode": "BloodGlucoseMeter","reliability": "2", "recordType": "Device"}
+{"productCode": "PulseOximeter","reliability": "2", "recordType": "Device"}
+{"productCode": "SleepDataScanDevice","reliability": "2", "recordType": "Device"}
+{"productCode": "Sphygmomanometer","reliability": "2", "recordType": "Device"}
+{"productCode": "VoiceAssistant","reliability": "2", "recordType": "Device"}

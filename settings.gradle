@@ -1,0 +1,12 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'poc'
+include 'core'
+include 'web'
+include 'batch:blood-pressure-snapshot'
+include 'simulator:device2aih'
+include 'simulator:services2evh'

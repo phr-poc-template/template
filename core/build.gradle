@@ -1,0 +1,27 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+archivesBaseName = 'core'
+
+dependencies {
+    // https://mvnrepository.com/artifact/org.projectlombok/lombok
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    // https://mvnrepository.com/artifact/com.microsoft.azure/azure
+    implementation group: 'com.microsoft.azure', name: 'azure', version: rootProject.ext.azure
+    // https://mvnrepository.com/artifact/com.microsoft.azure/azure-documentdb
+    implementation group: 'com.microsoft.azure', name: 'azure-documentdb', version: rootProject.ext.azureDocumentdb
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: rootProject.ext.jackson
+    // https://mvnrepository.com/artifact/junit/junit
+    testImplementation group: 'junit', name: 'junit', version: rootProject.ext.junit
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: rootProject.ext.slf4j
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    testImplementation group: 'org.slf4j', name: 'slf4j-log4j12', version: rootProject.ext.slf4j
+    // https://mvnrepository.com/artifact/org.springframework/spring-context
+    implementation group: 'org.springframework', name: 'spring-context', version: rootProject.ext.springContext
+}

@@ -1,0 +1,251 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "name": {
+            "type": "string"
+        },
+        "location": {
+            "type": "String"
+        },
+        "funcDataExchangeName": {
+            "type": "String"
+        },
+        "clientId": {
+            "type": "string"
+        },
+        "clientSecret": {
+            "type": "securestring"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2019-01-01",
+            "name": "[parameters('name')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "Developer",
+                "capacity": 1
+            },
+            "properties": {
+                "publisherEmail": "dummy@dummy.jp",
+                "publisherName": "phrprimary"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/', parameters('funcDataExchangeName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]",
+                "[resourceId('Microsoft.ApiManagement/service/authorizationServers', parameters('name'), 'oauth2-service')]"
+            ],
+            "properties": {
+                "displayName": "[parameters('funcDataExchangeName')]",
+                "apiRevision": "1",
+                "description": "Import from Function App",
+                "path": "[parameters('funcDataExchangeName')]",
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true,
+                "subscriptionRequired": false,
+                "authenticationSettings": {
+                  "oAuth2": {
+                    "authorizationServerId": "oauth2-service"
+                  } 
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/authorizationServers",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/oauth2-service')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+            ],
+            "properties": {
+                "displayName": "oauth2-service",
+                "clientRegistrationEndpoint": "http://localhost",
+                "authorizationEndpoint": "[concat('https://login.microsoftonline.com/', subscription().tenantId, '/oauth2/v2.0/authorize')]",
+                "authorizationMethods": [
+                    "GET"
+                ],
+                "clientAuthenticationMethod": [
+                    "Body"
+                ],
+                "tokenBodyParameters": [],
+                "tokenEndpoint": "[concat('https://login.microsoftonline.com/', subscription().tenantId, '/oauth2/v2.0/token')]",
+                "supportState": false,
+                "grantTypes": [
+                    "clientCredentials"
+                ],
+                "bearerTokenSendingMethods": [
+                    "authorizationHeader"
+                ],
+                "clientId": "[parameters('clientId')]",
+                "clientSecret": "[parameters('clientSecret')]"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/products",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/phrSecProducts')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+            ],
+            "properties": {
+                "displayName": "PhrSecProducts",
+                "description": "Subscribers have completely unlimited access to the API. Administrator approval is required.",
+                "subscriptionRequired": false,
+                "state": "published"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2019-01-01",
+                    "type": "apis",
+                    "name": "[parameters('funcDataExchangeName')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]",
+                        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('name'), parameters('funcDataExchangeName'))]",
+                        "[resourceId('Microsoft.ApiManagement/service/products', parameters('name'), 'phrSecProducts')]"
+                    ],
+                    "properties": {}
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/properties",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/', parameters('funcDataExchangeName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+            ],
+            "properties": {
+                "displayName": "fun-key",
+                "value": "[listKeys(concat('/Microsoft.Web/sites/', parameters('funcDataExchangeName'), '/host/default/'),'2019-08-01').functionKeys.default]",
+                "tags": [
+                    "key",
+                    "function",
+                    "auto"
+                ],
+                "secret": true
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/backends",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/', parameters('funcDataExchangeName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]",
+                "[resourceId('Microsoft.ApiManagement/service/properties', parameters('name'), parameters('funcDataExchangeName'))]"
+            ],
+            "properties": {
+                "description": "dataexchange",
+                "url": "[concat('https://', parameters('funcDataExchangeName'), '.azurewebsites.net/api')]",
+                "protocol": "http",
+                "resourceId": "[concat('https://management.azure.com', subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Web/sites/', parameters('funcDataExchangeName'))]",
+                "credentials": {
+                    "header": {
+                        "x-functions-key": [
+                            "[concat('{{', parameters('funcDataExchangeName'), '}}')]"
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/', parameters('funcDataExchangeName') ,'/get-getuserrecords')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('name'), parameters('funcDataExchangeName'))]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+            ],
+            "properties": {
+                "displayName": "getUserRecords",
+                "method": "GET",
+                "urlTemplate": "/users/{userId}/records/",
+                "templateParameters": [
+                    {
+                        "name": "userId",
+                        "type": "string"
+                    }
+                ],
+                "responses": []
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/', parameters('funcDataExchangeName'), '/get-getuserrecords/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('name'), parameters('funcDataExchangeName'), 'get-getuserrecords')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('name'), parameters('funcDataExchangeName'))]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+            ],
+            "properties": {
+                "value": "[concat('
+                  <policies>
+                    <inbound>
+                      <base />
+                      <set-backend-service id=\"apim-generated-policy\" backend-id=\"', parameters('funcDataExchangeName') ,'\" />
+                    </inbound>
+                    <backend>
+                      <base />
+                    </backend>
+                    <outbound>
+                      <base />
+                    </outbound>
+                    <on-error>
+                      <base />
+                    </on-error>
+                  </policies>')]",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('name'), '/', parameters('funcDataExchangeName'), '/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('name'), parameters('funcDataExchangeName'))]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('name'))]"
+            ],
+            "properties": {
+                "value": 
+                "[concat('
+                 <policies>
+                   <inbound>
+                     <base />
+                     <validate-jwt header-name=\"Authorization\" failed-validation-httpcode=\"401\" failed-validation-error-message=\"認証が失敗しました。アクセストークンがないか、適切ではありません。\" require-expiration-time=\"false\" require-signed-tokens=\"false\">
+                       <openid-config url=\"https://login.microsoftonline.com/', subscription().tenantId ,'/v2.0/.well-known/openid-configuration\" />
+                         <issuers>
+                           <issuer>https://sts.windows.net/', subscription().tenantId, '/</issuer>
+                         </issuers>
+                         <required-claims>
+                           <claim name=\"aud\" match=\"any\">
+                             <value>api://', parameters('clientId'),'</value>
+                             <value>', parameters('clientId'), '</value>
+                           </claim>
+                         </required-claims>
+                     </validate-jwt>
+                   </inbound>
+                   <backend>
+                     <base />
+                   </backend>
+                   <outbound>
+                     <base />
+                   </outbound>
+                   <on-error>
+                     <base />
+                   </on-error>
+                 </policies>
+                ')]",
+                "format": "xml"
+            }
+        }
+    ]
+}

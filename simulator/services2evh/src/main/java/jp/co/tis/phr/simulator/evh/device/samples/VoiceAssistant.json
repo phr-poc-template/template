@@ -1,0 +1,67 @@
+{
+  "patient": "demo01",
+  "time": 1578446579,
+  "device": {
+    "makerCode": "Maker-A",
+    "productCode": "VoiceAssistant",
+    "version": "2.0",
+    "serialId": "Serial-ID",
+    "name": "Maker-A VoiceAssistant"
+  },
+  "vitals": {
+    "BT": {
+      "type": "BT",
+      "unit": "��",
+      "time": 1578446579,
+      "value": 38.6
+    },
+    "BPH": {
+      "type": "BPH",
+      "unit": "mmHg",
+      "time": 1578446579,
+      "value": 121
+    },
+    "BPL": {
+      "type": "BPL",
+      "unit": "mmHg",
+      "time": 1578446579,
+      "value": 81
+    },
+    "PR": {
+      "type": "PR",
+      "unit": "bpm",
+      "time": 1578446579,
+      "value": 55
+    },
+    "BS": {
+      "type": "BS",
+      "unit": "mg/dL",
+      "time": 1578446579,
+      "value": 298
+    },
+    "SpO2": {
+      "type": "SpO2",
+      "unit": "%",
+      "time": 1578446579,
+      "value": 99
+    },
+    "BH": {
+      "type": "BH",
+      "unit": "cm",
+      "time": 1578446579,
+      "value": 181.0
+    },
+    "BW": {
+      "type": "BW",
+      "unit": "kg",
+      "time": 1578446579,
+      "value": 74.3
+    },
+    "RR": {
+      "type": "RR",
+      "unit": "��",
+      "time": 1578446579,
+      "value": 20
+    }
+  }
+}

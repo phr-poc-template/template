@@ -1,0 +1,163 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string"
+        },
+        "cosmosdbAccountId": {
+            "type": "String"
+        },
+        "cosmosdbContainerNameForUserrecord": {
+            "type": "string"
+        },
+        "cosmosdbContainerNameForUser": {
+            "type": "string"
+        },
+        "cosmosdbPartitionKey": {
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts",
+            "apiVersion": "2020-04-01",
+            "name": "[parameters('cosmosdbAccountId')]",
+            "location": "[parameters('location')]",
+            "tags": {
+                "defaultExperience": "Core (SQL)"
+            },
+            "kind": "GlobalDocumentDB",
+            "properties": {
+                "enableAutomaticFailover": false,
+                "enableMultipleWriteLocations": false,
+                "isVirtualNetworkFilterEnabled": false,
+                "virtualNetworkRules": [],
+                "disableKeyBasedMetadataWriteAccess": false,
+                "databaseAccountOfferType": "Standard",
+                "consistencyPolicy": {
+                    "defaultConsistencyLevel": "Session",
+                    "maxIntervalInSeconds": 5,
+                    "maxStalenessPrefix": 100
+                },
+                "locations": [
+                    {
+                        "locationName": "[parameters('location')]",
+                        "provisioningState": "Succeeded",
+                        "failoverPriority": 0,
+                        "isZoneRedundant": false
+                    }
+                ],
+                "capabilities": []
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(parameters('cosmosdbAccountId'), '/', 'phrdb')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosdbAccountId'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "id": "phrdb"
+                },
+                "options": {}
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(parameters('cosmosdbAccountId'), '/', 'phrdb', '/', parameters('cosmosdbContainerNameForUser'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('cosmosdbAccountId'), 'phrdb')]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosdbAccountId'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "id": "[parameters('cosmosdbContainerNameForUser')]",
+                    "indexingPolicy": {
+                        "indexingMode": "consistent",
+                        "automatic": true,
+                        "includedPaths": [
+                            {
+                                "path": "/*"
+                            }
+                        ],
+                        "excludedPaths": [
+                            {
+                                "path": "/\"_etag\"/?"
+                            }
+                        ]
+                    },
+                    "partitionKey": {
+                        "paths": [
+                            "[parameters('cosmosdbPartitionKey')]"
+                        ],
+                        "kind": "Hash"
+                    },
+                    "conflictResolutionPolicy": {
+                        "mode": "LastWriterWins",
+                        "conflictResolutionPath": "/_ts"
+                    }
+                },
+                "options": {
+                    "autoscaleSettings": {
+                        "maxThroughput": 4000
+                    }
+                }
+            }
+        },
+        {
+            "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+            "apiVersion": "2020-04-01",
+            "name": "[concat(parameters('cosmosdbAccountId'), '/', 'phrdb', '/', parameters('cosmosdbContainerNameForUserrecord'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', parameters('cosmosdbAccountId'), 'phrdb')]",
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosdbAccountId'))]"
+            ],
+            "properties": {
+                "resource": {
+                    "id": "[parameters('cosmosdbContainerNameForUserrecord')]",
+                    "indexingPolicy": {
+                        "indexingMode": "consistent",
+                        "automatic": true,
+                        "includedPaths": [
+                            {
+                                "path": "/*"
+                            }
+                        ],
+                        "excludedPaths": [
+                            {
+                                "path": "/\"_etag\"/?"
+                            }
+                        ]
+                    },
+                    "partitionKey": {
+                        "paths": [
+                            "[parameters('cosmosdbPartitionKey')]"
+                        ],
+                        "kind": "Hash"
+                    },
+                    "defaultTtl": -1,
+                    "conflictResolutionPolicy": {
+                        "mode": "LastWriterWins",
+                        "conflictResolutionPath": "/_ts"
+                    }
+                },
+                "options": {
+                    "autoscaleSettings": {
+                        "maxThroughput": 4000
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "cosmosDbAccountPrimaryKey": {
+            "type": "string",
+            "value": "[listKeys(concat(subscription().id, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.DocumentDB/databaseAccounts/', parameters('cosmosdbAccountId')),'2015-04-08').primaryMasterKey]"
+        }
+    }
+}

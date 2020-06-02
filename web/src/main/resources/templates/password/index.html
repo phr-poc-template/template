@@ -1,0 +1,89 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHR | パスワード変更</title>
+</head>
+<body>
+<div class="content-wrapper" layout:fragment="content">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            パスワード変更
+            <!--            <small></small>-->
+        </h1>
+    </section>
+
+    <section class="content container-fluid">
+        <div class="box-body no-padding">
+            <form class="form-horizontal" role="form" action="password/" th:action="@{'/password/edit'}"
+                  th:object="${passwordForm}" method="post">
+                <input th:type="hidden" name="userId" th:value="*{userId}"/>
+                <div class="box box-info">
+                    <div class="box-body" th:classappend="${#fields.hasErrors('oldPassword')}? 'has-error'">
+                        <label for="oldPassword" class="col-form-label">現在のパスワード</label>
+                        <div class="controls">
+                            <div class="input-group">
+                                <input type="password"
+                                       id="oldPassword"
+                                       class="form-control"
+                                       name="oldPassword"
+                                       th:field="*{oldPassword}"/>
+                            </div>
+                        </div>
+                        <div th:if="${#fields.hasErrors('oldPassword')}"
+                             th:errors="*{oldPassword}" class="help-block"
+                             style="display: block">error!
+                        </div>
+                    </div>
+                    <div class="box-body" th:classappend="${#fields.hasErrors('newPassword')}? 'has-error'">
+                        <label for="newPassword" class="col-form-label">新しいパスワード</label>
+                        <div class="controls">
+                            <div class="input-group">
+                                <input type="password"
+                                       id="newPassword"
+                                       class="form-control"
+                                       name="newPassword"
+                                       th:field="*{newPassword}"/>
+                            </div>
+                        </div>
+                        <div th:if="${#fields.hasErrors('newPassword')}"
+                             th:errors="*{newPassword}" class="help-block"
+                             style="display: block">error!
+                        </div>
+                    </div>
+                    <div class="box-body" th:classappend="${#fields.hasErrors('newConfirmPassword')}? 'has-error'">
+                        <label for="newConfirmPassword" class="col-form-label">新しいパスワード(確認用)</label>
+                        <div class="controls">
+                            <div class="input-group">
+                                <input type="password"
+                                       id="newConfirmPassword"
+                                       class="form-control"
+                                       name="newConfirmPassword"
+                                       th:field="*{newConfirmPassword}"/>
+                            </div>
+                        </div>
+                        <div th:if="${#fields.hasErrors('newConfirmPassword')}"
+                             th:errors="*{newConfirmPassword}" class="help-block"
+                             style="display: block">error!
+                        </div>
+                    </div>
+                    <div class="box-body">
+                        <label class="col-form-label">パスワードポリシー</label>
+                        <ol>
+                            <li>1文字以上20文字以下の半角文字</li>
+                        </ol>
+                    </div>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+</body>
+</html>

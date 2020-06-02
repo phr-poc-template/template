@@ -1,0 +1,25 @@
+{
+  "patient": "demo01",
+  "time": 1578446201,
+  "device": {
+    "makerCode": "Maker-A",
+    "productCode": "PulseOximeter",
+    "version": "",
+    "serialId": "5A-8CDC-83EA-1F6E-53A174885BFD",
+    "name": "Maker-A PulseOximeter"
+  },
+  "vitals": {
+    "PR": {
+      "type": "PR",
+      "unit": "回",
+      "time": 1578446201,
+      "value": 98
+    },
+    "SpO2": {
+      "type": "SpO2",
+      "unit": "%",
+      "time": 1578446201,
+      "value": 99
+    }
+  }
+}

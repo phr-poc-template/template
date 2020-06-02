@@ -1,0 +1,288 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.2.2.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "streamJobName": {
+      "type": "string"
+    },
+    "inputBlobStorageName": {
+      "type": "string"
+    },
+    "inputBlobStorageKey": {
+      "type": "securestring"
+    },
+    "inputBlobStorageContainerName": {
+      "type": "string"
+    },
+    "outputBlobStorageName": {
+      "type": "string"
+    },
+    "outputBlobStorageKey": {
+      "type": "securestring"
+    },
+    "outputBlobStorageContainerName": {
+      "type": "string"
+    },
+    "iotHubNamespace":{
+      "type":"string"
+    },
+    "iothubSharedAccessPolicyName":{
+      "type":"string"
+    },
+    "iothubSharedAccessPolicyKey":{
+      "type":"securestring"
+    },
+    "iothubConsumerGroupName":{
+      "type":"string"
+    },
+    "cosmosdbAccountId":{
+      "type":"string"
+    },
+    "cosmosdbAccountKey": {
+      "type":"string"
+    },
+    "cosmosdbCollectionNamePattern": {
+      "type":"string"
+    },
+    "cosmosdbPartitionKey": {
+      "type":"string"
+    },
+    "cosmosdbDocumentId": {
+      "type":"string"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('streamJobName')]",
+      "type": "Microsoft.StreamAnalytics/streamingjobs",
+      "apiVersion": "2016-03-01",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "Standard"
+        },
+        "compatibilityLevel": "1.1",
+        "inputs": [
+          {
+            "name": "Products",
+            "properties": {
+              "type": "Reference",
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "storageAccounts": [
+                    {
+                      "accountName": "[parameters('inputBlobStorageName')]",
+                      "accountKey": "[parameters('inputBlobStorageKey')]"
+                    }
+                  ],
+                  "container": "[parameters('inputBlobStorageContainerName')]",
+                  "pathPattern": "{date}/{time}/products.json",
+                  "dateFormat": "yyyy-MM-dd",
+                  "timeFormat": "HH-mm"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              }
+            }
+          },
+          {
+            "name": "AIH",
+            "properties": {
+              "type": "Stream",
+              "datasource": {
+                "type": "Microsoft.Devices/IotHubs",
+                "properties": {
+                  "iotHubNamespace": "[parameters('iotHubNamespace')]",
+                  "sharedAccessPolicyName": "[parameters('iothubSharedAccessPolicyName')]",
+                  "sharedAccessPolicyKey": "[parameters('iothubSharedAccessPolicyKey')]",
+                  "consumerGroupName": "[parameters('iothubConsumerGroupName')]",
+                  "endpoint":"messages/events"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "trans",
+          "properties": {
+            "streamingUnits": 1,
+            "query": "WITH Input AS (
+    SELECT
+        GetMetadataPropertyValue(AIH, 'EventId') AS id,
+        UDF.createEvent(DATEADD(second, AIH.time, '1970-01-01T00:00:00Z'), AIH.device.makerCode, AIH.device.productCode, AIH.device.version, AIH.device.serialId, AIH.device.name, P.reliability, P.recordType) AS event,
+        AIH.patient as user_id,
+        CAST(0 as bit) as deleted,
+        COALESCE(AIH.vitals.BT.value, NULL) as body_temperature,
+        COALESCE(AIH.vitals.BPH.value, NULL) as systolic_blood_pressure,
+        COALESCE(AIH.vitals.BPL.value, NULL) as diastolic_blood_pressure,
+        COALESCE(AIH.vitals.BS.value, NULL) as fasting_plasma_glucose,
+        COALESCE(AIH.vitals.SpO2.value, NULL) as spO2,
+        COALESCE(AIH.vitals.PR.value, NULL) as pulse_rate,
+        COALESCE(AIH.vitals.RR.value, AIH.sleep.vitalRR, NULL) as respiratory_rate,
+        COALESCE(AIH.vitals.HR.value, AIH.sleep.vitalHR, NULL) as heart_rate,
+        UDF.createSleep(AIH.sleep.state, AIH.sleep.motion) as sleep
+    FROM [AIH] AIH
+    LEFT JOIN [Products] P ON AIH.device.productCode = P.productCode
+)
+SELECT * INTO [UserRecord] FROM Input
+SELECT * INTO [Blob] FROM Input"
+          }
+        },
+          "outputs": [
+          {
+            "name": "UserRecord",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/DocumentDB",
+                "properties": {
+                  "accountId": "[parameters('cosmosdbAccountId')]",
+                  "accountKey": "[parameters('cosmosdbAccountKey')]",
+                  "database": "phrdb",
+                  "collectionNamePattern": "[parameters('cosmosdbCollectionNamePattern')]",
+                  "partitionKey": "[parameters('cosmosdbPartitionKey')]",
+                  "documentId": "[parameters('cosmosdbDocumentId')]"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              }
+            }
+          },
+          {
+            "name": "Blob",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "storageAccounts": [
+                    {
+                      "accountName": "[parameters('outputBlobStorageName')]",
+                      "accountKey": "[parameters('outputBlobStorageKey')]"
+                    }
+                  ],
+                  "container": "[parameters('outputBlobStorageContainerName')]",
+                  "pathPattern": "{date}",
+                  "dateFormat": "yyyy-MM-dd",
+                  "timeFormat": "HH"
+                }
+              },
+              "serialization": {
+                "type": "Json",
+                "properties": {
+                  "encoding": "UTF8",
+                  "format": "LineSeparated"
+                }
+              }
+            }
+          }
+        ],
+        "functions": [
+          {
+            "name": "createEvent",
+            "properties": {
+                "type": "Scalar",
+                "properties": {
+                    "inputs": [
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      }
+                    ],
+                    "output": {
+                        "dataType": "record"
+                    },
+                    "binding": {
+                      "type": "Microsoft.StreamAnalytics/JavascriptUdf",
+                      "properties": {
+                        "script": "function main(time,maker_code,product_code,version,serialId,name,reliability,record_type)
+{
+  var obj = new Object();
+  obj.time = time
+  obj.publish = time;
+  obj.maker_code = maker_code;
+  obj.product_code = product_code;
+  obj.version = version;
+  obj.serialId = serialId;
+  obj.name = name;
+  obj.reliability = reliability;
+  obj.record_type = record_type;
+  return obj;
+}"
+                      }
+                    }
+                }
+            }
+          },
+          {
+            "name": "createSleep",
+            "properties": {
+                "type": "Scalar",
+                "properties": {
+                    "inputs": [
+                      {
+                        "dataType": "any"
+                      },
+                      {
+                        "dataType": "any"
+                      }
+                    ],
+                    "output": {
+                      "dataType": "record"
+                    },
+                    "binding": {
+                      "type": "Microsoft.StreamAnalytics/JavascriptUdf",
+                      "properties": {
+                        "script": "function main(state, motion)
+{
+  var obj = new Object();
+  obj.state = state;
+  obj.motion =motion;
+  return obj;
+}"
+                      }
+                    }
+                }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "trigger",
+  "main": "cosmos2blob/cosmosdb-trigger.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "",
+  "dependencies": {
+    "@azure/identity": "^1.0.0",
+    "@azure/storage-blob": "^12.0.0",
+    "dotenv": "^6.0.0",
+    "uuid": "^8.1.0"
+  },
+  "version": "1.0.0",
+  "directories": {
+    "test": "test"
+  },
+  "devDependencies": {},
+  "keywords": [],
+  "license": "ISC",
+  "description": ""
+}

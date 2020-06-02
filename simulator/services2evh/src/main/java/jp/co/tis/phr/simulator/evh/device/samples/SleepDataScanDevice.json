@@ -1,0 +1,18 @@
+{
+  "patient": "demo01",
+  "time": 1578446331051,
+  "device": {
+    "makerCode": "Maker-A",
+    "productCode": "SleepDataScanDevice",
+    "version": "1.0.6",
+    "serialId": "w14H0001",
+    "name": "Maker-A SleepDataScanDevice"
+  },
+  "sleep": {
+    "state": "sleep",
+    "motion": -1,
+    "time": 1578446331051,
+    "vitalRR": 22,
+    "vitalHR": 54
+  }
+}

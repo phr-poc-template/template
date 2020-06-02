@@ -1,0 +1,68 @@
+apply plugin: 'java'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'com.google.cloud.tools.jib'
+apply plugin: 'io.spring.dependency-management'
+
+archivesBaseName = 'web'
+
+bootJar {
+    archivesBaseName = "phr-web"
+}
+
+jib {
+    to {
+        image = "${ACR_NAME}.azurecr.io/web:${ACR_VERSION}"
+        auth {
+            username = "${ACR_NAME}"
+            password = "${ACR_PASSWORD}"
+        }
+        container {
+            jvmFlags = ['-Djava.net.preferIPv4Stack=true']
+        }
+    }
+}
+
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+
+bootJar {
+    mainClassName = 'jp.co.tis.phr.web.WebApplication'
+}
+
+dependencies {
+    implementation project(':core')
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity5'
+    // https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api
+    compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: '2.1.1'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-java8time'
+    // https://mvnrepository.com/artifact/nz.net.ultraq.thymeleaf/thymeleaf-layout-dialect
+    implementation group: 'nz.net.ultraq.thymeleaf', name: 'thymeleaf-layout-dialect', version: rootProject.ext.thymeleaf
+    // https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
+    implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: rootProject.ext.jackson
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: rootProject.ext.commonsLang3
+    // https://mvnrepository.com/artifact/com.microsoft.azure/azure-spring-boot-metrics-starter
+    compile group: 'com.microsoft.azure', name: 'azure-spring-boot-metrics-starter', version: rootProject.ext.azureSpringBootMetricsStarter
+    // https://mvnrepository.com/artifact/org.projectlombok/lombok
+    compileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    testCompileOnly group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    annotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    testAnnotationProcessor group: 'org.projectlombok', name: 'lombok', version: rootProject.ext.lombok
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-api
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: rootProject.ext.slf4j
+    // https://mvnrepository.com/artifact/org.slf4j/slf4j-log4j12
+    testCompile group: 'org.slf4j', name: 'slf4j-log4j12', version: rootProject.ext.slf4j
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    implementation group: 'org.passay', name: 'passay', version: rootProject.ext.passay
+}

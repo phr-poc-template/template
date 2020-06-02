@@ -1,0 +1,31 @@
+{
+  "patient": "demo01",
+  "time": 1578446411,
+  "device": {
+    "makerCode": "Maker-A",
+    "productCode": "Sphygmomanometer",
+    "version": "1.0.0",
+    "serialId": "serialId",
+    "name": "Maker-A Sphygmomanometer"
+  },
+  "vitals": {
+    "BPH": {
+      "type": "BPH",
+      "unit": "mmHg",
+      "time": 1578446411,
+      "value": 121
+    },
+    "BPL": {
+      "type": "BPL",
+      "unit": "mmHg",
+      "time": 1578446411,
+      "value": 83
+    },
+    "PR": {
+      "type": "PR",
+      "unit": "bpm",
+      "time": 1578446411,
+      "value": 57
+    }
+  }
+}

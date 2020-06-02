@@ -1,0 +1,38 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "String"
+        },
+        "logAnalyticsWorkspaceName": {
+            "defaultValue": "phr-logs-workspace",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Operationalinsights/workspaces",
+            "apiVersion": "2015-11-01-preview",
+            "name": "[parameters('logAnalyticsWorkspaceName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "sku": {
+                    "name": "pergb2018"
+                },
+                "retentionInDays": 30
+            }
+        }
+    ],
+    "outputs": {
+        "logAnalyticsWorkspaceId": {
+            "type": "string",
+            "value": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2015-11-01-preview').customerId]"
+        },
+        "logAnalyticsWorkspacePrimarySharedKey": {
+            "type": "string",
+            "value": "[listKeys(concat('Microsoft.OperationalInsights/workspaces/', parameters('logAnalyticsWorkspaceName')),'2015-03-20').primarySharedKey]"
+        }
+    }
+}
