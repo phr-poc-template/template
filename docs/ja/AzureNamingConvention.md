@@ -6,7 +6,7 @@ Azureリソースの命名規則を以下のようにしています。
 参考
 
 * [Azure リソースの名前付け規則と制限事項 | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/architecture/best-practices/resource-naming)
-* [準備完了: 推奨される名前付けおよびタグ付け規則](https://docs.microsoft.com/ja-jp/azure/cloud-adoption-framework/ready/azure-best-practices/naming-and-tagging)
+* [推奨される名前付けおよびタグ付け規則 | Microsoft Docs](https://docs.microsoft.com/ja-jp/azure/cloud-adoption-framework/ready/azure-best-practices/naming-and-tagging)
 
 
 サービス名称
