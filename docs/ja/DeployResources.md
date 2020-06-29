@@ -157,7 +157,7 @@
         wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
         sudo dpkg -i packages-microsoft-prod.deb
         sudo apt-get update
-        sudo apt-get install -y azure-functions-core-tools
+        sudo apt install azure-functions-core-tools=2.7.2508-1
         ```
 
        インストールが完了したら、以下のコマンドで正しくインストールされたかを確認してください。
