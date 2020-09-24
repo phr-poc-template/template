@@ -19,14 +19,14 @@
 
   |           対象            |    バージョン    |
   | ------------------------- | ---------------- |
-  | Git                       | バージョン問わず |
+  | Git                       | 指定なし         |
   | Open JDK                  | 11.0.2           |
   | Azure CLI                 | 2.0.80           |
-  | Node.js                   | 最新のLTS        |
-  | npm                       | 最新のLTS        |
-  | jq                        | 1.5-1-a5b5cbe    |
-  | azure-function-core-tools | v2               |
-  | .NET Core SDK             | 2.2              |
+  | Node.js                   | 12.x             |
+  | npm                       | 6.x              |
+  | jq                        | 指定なし         |
+  | azure-function-core-tools | v3               |
+  | .NET Core SDK             | 3.1              |
 
 - デプロイを実行するAzureアカウントは、サブスクリプションの所有者でかつ、グローバル管理者である必要があります。
 
@@ -169,7 +169,7 @@
        以下のように表示されれば、正しくインストールができています。
 
        ```cmd
-       2.7.1948
+       3.0.2881
        ```
 
     1. .NET Core SDKのインストール
@@ -182,13 +182,13 @@
         sudo apt-get install -y apt-transport-https
 
         sudo apt-get update
-        sudo apt-get install -y dotnet-sdk-2.2
+        sudo apt-get install -y dotnet-sdk-3.1
 
         sudo apt-get update
-        sudo apt-get install -y aspnetcore-runtime-2.2
+        sudo apt-get install -y aspnetcore-runtime-3.1
 
         sudo apt-get update
-        sudo apt-get install -y dotnet-runtime-2.2
+        sudo apt-get install -y dotnet-runtime-3.1
         ```
 
        インストールが完了したら、以下のコマンドで正しくインストールされたかを確認してください。
@@ -200,7 +200,7 @@
        以下のように表示されれば、正しくインストールができています。
 
        ```cmd
-       2.2.402 [/usr/share/dotnet/sdk]
+       3.1.402 [/usr/share/dotnet/sdk]
        ```
 
 1. プロジェクトのクローン
