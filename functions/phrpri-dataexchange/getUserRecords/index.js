@@ -87,7 +87,12 @@ module.exports = async (context, req) => {
 
     const json = JSON.stringify(userData);
     context.log("found." + json);
-    context.done(null, json);
+    context.res = {
+        body: json,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }
 };
 
 const fetch = async (client, user_id, offset, limit) => {
