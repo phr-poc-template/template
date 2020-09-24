@@ -13,24 +13,24 @@ IoTHubへデータを送信するためのシミュレータです。
 
 1. 環境変数 IOTHUB_CONNECT_STRINGに先ほどコピーしたプライマリ接続文字列を設定します。
 
-```
-export IOTHUB_CONNECT_STRING=<プライマリ接続文字列>
-```
+    ```
+    export IOTHUB_CONNECT_STRING=<プライマリ接続文字列>
+    ```
 
 1. 血圧計を動かしてみましょう。
 
-プロジェクトルートに移動してコマンドを実行します
+    プロジェクトルートに移動してコマンドを実行します
 
-```
-$ poc>gradlew simulator:device2aih:executeSphygmomanometer
-> Task :executeSphygmomanometer
-[2020-01-10 09:58:27,784] [main] [INFO ] [jp.co.tis.phr.simulator.aih.IoTHubClient] - {"patient":"demo08","time":1578617907,"device":{"makerCode":"Maker-B","productCode":"Sphy
-gmomanometer","version":"1.0.0","serialId":"serialId","name":"Maker-A Sphygmomanometer"},"vitals":{"BPH":{"type":"BPH","unit":"mmHg","time":1578617907,"value":121},"BPL":{"
-type":"BPL","unit":"mmHg","time":1578617907,"value":82},"PR":{"type":"PR","unit":"bpm","time":1578617907,"value":54}}}
-・・・
-BUILD SUCCESSFUL in 4s
-3 actionable tasks: 1 executed, 2 up-to-date
-```
+    ```
+    $ poc>gradlew simulator:device2aih:executeSphygmomanometer
+    > Task :executeSphygmomanometer
+    [2020-01-10 09:58:27,784] [main] [INFO ] [jp.co.tis.phr.simulator.aih.IoTHubClient] - {"patient":"demo08","time":1578617907,"device":{"makerCode":"Maker-B","productCode":"Sphy
+    gmomanometer","version":"1.0.0","serialId":"serialId","name":"Maker-A Sphygmomanometer"},"vitals":{"BPH":{"type":"BPH","unit":"mmHg","time":1578617907,"value":121},"BPL":{"
+    type":"BPL","unit":"mmHg","time":1578617907,"value":82},"PR":{"type":"PR","unit":"bpm","time":1578617907,"value":54}}}
+    ・・・
+    BUILD SUCCESSFUL in 4s
+    3 actionable tasks: 1 executed, 2 up-to-date
+    ```
 
 ### オプション
 

@@ -11,7 +11,7 @@
       "route": "users/{userId}/records"
     },
     {
-      "name": "$return",
+      "name": "res",
       "type": "http",
       "direction": "out"
     }
