@@ -25,7 +25,7 @@ function drawChart(selector, ajaxUrl, bindto, dateSelector, message, chartFuncti
             // construct data for XAxes
             const xAxesData =
                 retrieveData.map(d => {
-                    return moment(d.time).tz(moment.tz.guess()).format("MM/DD HH:mm");
+                    return moment(d.time).tz(moment.tz.guess()).format("YYYY/MM/DD HH:mm");
                 });
 
             chartFunction(ctx, retrieveData, xAxesData);
