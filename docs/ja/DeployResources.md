@@ -59,7 +59,7 @@
        sudo mkdir /usr/lib/jvm
        sudo tar xfvz /tmp/openjdk-11+28_linux-x64_bin.tar.gz --directory /usr/lib/jvm
        rm /tmp/openjdk-11+28_linux-x64_bin.tar.gz
-       sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-11.0.2/bin/java 10
+       sudo update-alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-11/bin/java 10
        sudo update-alternatives --config java
        ```
 
@@ -157,7 +157,7 @@
         wget -q https://packages.microsoft.com/config/ubuntu/18.04/packages-microsoft-prod.deb
         sudo dpkg -i packages-microsoft-prod.deb
         sudo apt-get update
-        sudo apt install azure-functions-core-tools=2.7.2508-1
+        sudo apt-get install azure-functions-core-tools-3
         ```
 
        インストールが完了したら、以下のコマンドで正しくインストールされたかを確認してください。
