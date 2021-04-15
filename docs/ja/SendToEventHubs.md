@@ -55,7 +55,7 @@ export USER_NAME=demo02
 例えば、10秒おきにデータを送信する場合は以下のように指定します。
 
 ```
-set  CRON_EXPRESSION=*/10 * * * * ?
+export  CRON_EXPRESSION=*/10 * * * * ?
 ```
 
 停止する場合はCtrl + Cで停止してください。
